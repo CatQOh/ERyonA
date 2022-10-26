@@ -1,0 +1,84 @@
+﻿@SYSTEM_TITLE
+
+CALL 職業定義
+MAX_LINE = 15
+
+[SKIPSTART]
+DRAWLINE
+ALIGNMENT CENTER
+PRINTL era未定
+DRAWLINE
+ALIGNMENT LEFT
+PRINTFORML [0] - 最初から始める
+PRINTFORML [1] - 続きから始める
+
+CALL INPUTF, 0, 1
+
+SELECTCASE RESULT
+	CASE 0
+		JUMP ニューゲーム
+	CASE 1
+ENDSELECT
+[SKIPEND]
+
+DO
+	CALL カラム生成, "タイトル", "最初から始める", "続きから始める"
+	SELECTCASE CRESULT:0
+		CASE 0
+			IF INRANGE(CRESULT:1, 0, 9)
+				IF CHKDATA(CRESULT:1) > 0
+					VARLINE = LINECOUNT
+					JUMP ニューゲーム, CRESULT:1
+				ENDIF
+			ELSEIF INRANGE(CRESULT:1, 10, 19)
+				VARLINE = LINECOUNT
+				JUMP ニューゲーム, CRESULT:1-10
+			ENDIF
+		CASE 1
+			IF CHKDATA(CRESULT:1) == 0
+				VARLINE = LINECOUNT
+				LOADDATA CRESULT:1
+			ENDIF
+	ENDSELECT
+LOOP 1
+
+@タイトル_最初から始める
+#DIM DYNAMIC LCOUNT
+#DIM DYNAMIC LINE
+カラム行:(LINE++) = era未定 作者:Enter
+FOR LCOUNT, 0, 10
+	SELECTCASE CHKDATA(LCOUNT)
+		CASE 0
+			カラム行:(LINE++) = [{LCOUNT}] %RESULTS%
+		CASE 1
+			カラム行:(LINE++) = [{LCOUNT}] ----
+			RESETCOLOR
+		CASE 2 TO 4
+			カラム行:(LINE++) = [{LCOUNT}] 無効なセーブデータ
+	ENDSELECT
+NEXT
+
+IF INRANGE(CRESULT:1, 0, 9)
+	カラム行:(LINE++) = {CRESULT:1}番には既にセーブデータが存在します。上書きしてニューゲーム開始しますか？
+	カラム行:(LINE++) = [{CRESULT:1+10}] はい [20] いいえ
+ENDIF
+
+@タイトル_続きから始める
+#DIM DYNAMIC LCOUNT
+#DIM DYNAMIC LINE
+カラム行:(LINE++) = era未定 作者:Enter
+FOR LCOUNT, 0, 10
+	SELECTCASE CHKDATA(LCOUNT)
+		CASE 0
+			カラム行:(LINE++) = [{LCOUNT}] %RESULTS%
+		CASE 1
+			カラム行:(LINE++) = (COLOR:gray:[{LCOUNT}] ----)
+			RESETCOLOR
+		CASE 2 TO 4
+			カラム行:(LINE++) = (COLOR:gray:[{LCOUNT}] 無効なセーブデータ)
+	ENDSELECT
+NEXT
+
+@SHOW_SHOP
+MAX_LINE = 30
+JUMP メインメニュー

@@ -1,0 +1,116 @@
+﻿@メインメニュー
+#DIM NOWCOLUMN
+SIF 加入候補 == -1
+	CALL 加入候補生成
+
+DO
+	CALL カラム生成, "メインメニュー", "ダンジョン探索", "部隊編成", "人員の補充", "セーブ＆ロード"
+	NOWCOLUMN = CRESULT:0
+	SELECTCASE カラム名:(CRESULT:0)
+		CASE "ダンジョン探索"
+		CASE "部隊編成"
+			SELECTCASE CRESULT:1
+				CASE 1, 10
+					CALL 部隊編成, CRESULT:1
+			ENDSELECT
+		CASE "人員の補充"
+			SELECTCASE CRESULT:1
+				CASE 10 TO 14
+					ステータス:対象:未加入 = 0
+					加入済み:(CRESULT:1-10) = 1
+			ENDSELECT
+		CASE "セーブ＆ロード"
+			SELECTCASE CRESULT:1
+				CASE 0 TO 9
+					IF CHKDATA(CRESULT:1) == 0
+						LOADDATA CRESULT:1
+					ENDIF
+				CASE 10
+					SAVEDATA SAVEID, @"{SAVEID}"
+			ENDSELECT
+	ENDSELECT
+	CRESULT:0 = NOWCOLUMN
+LOOP 1
+
+@メインメニュー_ダンジョン探索
+#DIM DYNAMIC LINE
+
+カラム行:(LINE++) = [0] - ダンジョン探索です
+カラム行:(LINE++) = [1] - 1です
+
+
+@メインメニュー_部隊編成
+#DIM DYNAMIC LCOUNT
+
+FOR LCOUNT, 1, 11
+	カラム行:LCOUNT = [{LCOUNT}] 部隊{LCOUNT}
+NEXT
+
+@メインメニュー_人員の補充
+#DIM DYNAMIC LCOUNT
+#DIM DYNAMIC LCOUNT2
+#DIM DYNAMIC 対象
+#DIM DYNAMIC LINE
+
+FOR LCOUNT, 0, 5
+	SIF 加入済み:LCOUNT
+		CONTINUE
+	対象 = 加入候補:LCOUNT
+	カラム行:(LINE++) = 名前:%NAME:対象% レベル:{ステータス:対象:レベル} 職業:%CSTR:対象:職業% 性格:%CSTR:対象:性格% [{LCOUNT}] - 雇う
+	FOR LCOUNT2, 0, 6, 2
+		カラム行:(LINE++) = %ERDNAME(ステータス, LCOUNT2)%%"■"*ステータス:対象:LCOUNT2%%"□"*(20-ステータス:対象:LCOUNT2)% {ステータス:対象:LCOUNT2} %ERDNAME(ステータス, (LCOUNT2+1))%%"■"*ステータス:対象:(LCOUNT2+1)%%"□"*(20-ステータス:対象:(LCOUNT2+1))% {ステータス:対象:(LCOUNT2+1)}
+	NEXT
+	カラム行:(LINE++) = 
+NEXT
+SELECTCASE CRESULT:1
+	CASE 0 TO 4
+		カラム行:(LINE++) = %NAME:(加入候補:(CRESULT:1))%を雇いますか？
+		カラム行:(LINE++) = [{CRESULT:1+10}] はい [20] いいえ
+	CASE 10 TO 14
+		カラム行:(LINE++) = %NAME:(CRESULT:1-10)%を雇った
+ENDSELECT
+
+
+@メインメニュー_セーブ＆ロード
+#DIM DYNAMIC LINE
+#DIM DYNAMIC LCOUNT
+
+カラム行:(LINE++) = □セーブ
+カラム行:(LINE++) = [10] セーブする（セーブデータID:{SAVEID}）
+カラム行:(LINE++) = 
+カラム行:(LINE++) = □ロード
+FOR LCOUNT, 0, 10
+	SELECTCASE CHKDATA(LCOUNT)
+		CASE 0
+			カラム行:(LINE++) = [{LCOUNT}] %RESULTS%
+		CASE 1
+			カラム行:(LINE++) = (COLOR:gray:[{LCOUNT}] ----)
+			RESETCOLOR
+		CASE 2 TO 4
+			カラム行:(LINE++) = (COLOR:gray:[{LCOUNT}] 無効なセーブデータ)
+	ENDSELECT
+NEXT
+カラム行:(LINE++) = 
+SIF CRESULT:1 == 10
+	カラム行:(LINE++) = セーブしました
+
+@加入候補生成
+#DIM DYNAMIC LCOUNT
+#DIM DYNAMIC LCOUNT2
+#DIM DYNAMIC 対象
+
+RANDOMIZE シード値:キャラクター
+FOR LCOUNT, 0, 5
+	ADDVOIDCHARA
+	加入候補:LCOUNT = CHARANUM-1
+	対象 = 加入候補:LCOUNT
+	NAME:対象 = %ランダム命名(RAND(1, 4))%
+	ステータス:対象:レベル = RAND(6, 11)
+	CSTR:対象:職業 = %職業一覧:(RAND:VARSIZE("職業一覧"))%
+	CALL 職業初期値, CSTR:対象:職業, 対象
+	FOR LCOUNT2, 1, ステータス:対象:レベル 
+		ステータス:対象:(RAND:6)++
+	NEXT
+	;ステータスの設定 保留
+	ステータス:対象:未加入 = 1
+NEXT

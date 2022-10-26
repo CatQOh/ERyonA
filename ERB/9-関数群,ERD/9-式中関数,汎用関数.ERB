@@ -1,0 +1,200 @@
+﻿;;;式中関数「LOOPRES(LOOP RESULT)」
+;;;DO～LOOP構文の記述を簡略化するための関数
+;;;引数で指定された数字とRESULTを参照し、一致していれば0を返す(つまりLOOPを抜ける)
+;;;現在同時に指定できるのは10個まで
+@LOOPRES, ARG:0 = __INT_MAX__, ARG:1 = __INT_MAX__, ARG:2 = __INT_MAX__, ARG:3 = __INT_MAX__, ARG:4 = __INT_MAX__, ARG:5 = __INT_MAX__, ARG:6 = __INT_MAX__, ARG:7 = __INT_MAX__, ARG:8 = __INT_MAX__, ARG:9 = __INT_MAX__
+#FUNCTION
+SIF MATCH(ARG, RESULT)
+	RETURNF 0
+
+RETURNF 1
+
+;;;DO
+;;;	INPUT
+;;;LOOP LOOPRES(XX, XX, XX)
+;;;を一行でやる関数 単純な選択肢などに使える
+@INPUTF, 数値:0 = __INT_MAX__, 数値:1 = __INT_MAX__,数値:2 = __INT_MAX__,数値:3 = __INT_MAX__,数値:4 = __INT_MAX__,数値:5 = __INT_MAX__,数値:6 = __INT_MAX__,数値:7 = __INT_MAX__,数値:8 = __INT_MAX__,数値:9 = __INT_MAX__,
+#DIM DYNAMIC 数値, 10
+DO
+	INPUT
+LOOP LOOPRES(数値:0, 数値:1, 数値:2, 数値:3, 数値:4, 数値:5, 数値:6, 数値:7, 数値:8, 数値:9)
+
+RETURN RESULT
+
+;;;現在表示してる最後の行がDRAWLINE行かどうかをチェックし、そうでなければDRAWLINEを引く関数
+@CHECKDRAWLINE
+SIF HTML_TOPLAINTEXT(HTML_GETPRINTEDSTR(0)) != DRAWLINESTR
+	DRAWLINE
+
+;;;上記CHECKDRAWLINEのWAIT付き版
+@CHECKDRAWLINEW
+IF HTML_TOPLAINTEXT(HTML_GETPRINTEDSTR(0)) != DRAWLINESTR
+	WAIT
+	DRAWLINE
+ENDIF
+
+;;;eraBEMANIのMANUALPRINT タグを解析してPRINTする
+@PRINTEXT, 行:0
+#DIM DYNAMIC LCOUNT
+#DIM DYNAMIC 検索位置
+#DIMS DYNAMIC 行, 2
+#DIM DYNAMIC 始点
+#DIM DYNAMIC 文字数
+#DIMS DYNAMIC 字体, 3
+#DIMS DYNAMIC 本文
+
+;タグを探す
+始点 = STRFINDU(行, "(", 検索位置)
+文字数 = STRFINDU(行, ")", 検索位置)-始点
+;タグ付けされてれば処理実行
+IF 始点 >= 0
+	;タグ付けまでの文章を通常表示
+	PRINTFORM %SUBSTRINGU(行, 0, 始点)%
+	;処理、内容、本文でSPLITする
+	SPLIT SUBSTRINGU(行, 始点+1, 文字数-1), ":", 字体
+	本文 = %字体:2%
+	;字体:0 = 特殊処理の種類 字体:1 = 特殊処理の内容 本文 = 本文
+	;必要に応じて追加するとよい
+	SELECTCASE 字体:0
+		;フォント変更系
+		CASE "FONT"
+			SELECTCASE 字体:1
+				;太字
+				CASE "BOLD"
+					FONTBOLD
+					CALL PRINTEXT, 本文
+					FONTREGULAR
+				;打ち消し線
+				CASE "STRIKE"
+					FONTSTYLE 4
+					CALL PRINTEXT, 本文
+					FONTSTYLE 0
+			ENDSELECT
+		;色指定 現時点では色名のみで数値指定はできない
+		;指定した色名が無効であればデフォルト色表示
+		CASE "COLOR"
+			IF COLOR_FROMNAME(字体:1) == -1
+				CALL PRINTEXT, 本文
+			ELSE
+				SETCOLOR COLOR_FROMNAME(字体:1)
+				CALL PRINTEXT, 本文
+				RESETCOLOR
+			ENDIF
+		;その他
+		CASE "OTHER"
+			SELECTCASE 字体:1
+				;反転タ ALIGHNMENT命令の仕様上、タグ重複使用は不可能
+				CASE "REVERSE"
+					行:1 =
+					FOR LCOUNT, STRLENSU(本文), -1, -1
+						SELECTCASE CHARATU(本文, LCOUNT)
+							CASE "【"
+								行:1 += "】"
+							CASE "】"
+								行:1 += "【"
+							CASE "「"
+								行:1 += "」"
+							CASE "」"
+								行:1 += "「"
+							CASE "["
+								行:1 += "]"
+							CASE "]"
+								行:1 += "["
+							CASE "（"
+								行:1 += "）"
+							CASE "）"
+								行:1 += "（"
+							CASEELSE
+								行:1 += CHARATU(本文, LCOUNT)
+						ENDSELECT
+					NEXT
+					ALIGNMENT RIGHT
+					PRINTFORML %行:1%
+					ALIGNMENT LEFT
+				;WAIT このタグを使用すると改行されるので、文末までタグに含めないと表示がおかしくなる
+				CASE "WAIT"
+					CALL PRINTEXT, 本文
+					WAIT
+			ENDSELECT
+	ENDSELECT
+	;次の始動位置をタグ終了後の次の文字に設定
+	検索位置 = STRFINDU(行, 本文)+STRLENSU(本文)
+	IF 検索位置 < STRLENSU(行)
+		;残りの文章が閉じカッコならループ終了
+		IF 検索位置+1 == STRLENSU(行) && CHARATU(行, 検索位置) == ")"
+			RETURN
+		;残りの文章が閉じカッコ以外にもあれば再帰処理
+		ELSE
+			;閉じカッコの分+1
+			CALL PRINTEXT, SUBSTRINGU(行, 検索位置+1)
+			RETURN
+		ENDIF
+	ENDIF
+;タグが無ければ通常表示
+ELSE
+	PRINTFORM %行%
+	RETURN
+ENDIF
+
+;;;PRINTEXTを平文にしてSUBSTRINGする タグ入れ子には非対応
+@TAGSTRLENS, 行
+#FUNCTION
+
+#DIM DYNAMIC LCOUNT
+#DIM DYNAMIC 検索位置
+#DIMS DYNAMIC 行, 2
+#DIM DYNAMIC 始点
+#DIM DYNAMIC 文字数
+#DIMS DYNAMIC 字体, 3
+#DIMS DYNAMIC 本文
+#DIMS DYNAMIC 平文
+
+;タグを探す
+DO
+	始点 = STRFINDU(行, "(", 検索位置)
+	文字数 = STRFINDU(行, ")", 検索位置)-始点
+	;タグ付けされてれば処理実行
+	IF 始点 >= 0
+		;タグ付けまでの文章
+		平文 += SUBSTRINGU(行, 0, 始点)
+		;処理、内容、本文でSPLITする
+		SPLIT SUBSTRINGU(行, 始点+1, 文字数-1), ":", 字体
+		本文 = %字体:2%
+		平文 += 字体:2
+		DEBUGPRINTFORML %平文%
+		;次の始動位置をタグ終了後の次の文字に設定
+		検索位置 = STRFINDU(行, 本文)+STRLENSU(本文)
+		IF 検索位置 < STRLENSU(行)
+			;残りの文章が閉じカッコならループ終了
+			IF 検索位置+1 == STRLENSU(行) && CHARATU(行, 検索位置) == ")"
+				RETURNF STRLENS(平文)
+			;残りの文章が閉じカッコ以外にもあればループ
+			ELSE
+				;閉じカッコの分+1
+				検索位置++
+				CONTINUE
+			ENDIF
+		ENDIF
+	ELSE
+		平文 += SUBSTRINGU(行, 検索位置, STRLENSU(行))
+		DEBUGPRINTFORML %平文%
+		RETURNF STRLENS(平文)
+	ENDIF
+LOOP 1
+
+@COLUMNLINE, LINE, 文字数
+#DIM DYNAMIC LINE
+#DIM DYNAMIC LCOUNT
+#DIM DYNAMIC 文字数
+
+CALL PRINTEXT, カラム行:LINE
+
+FOR LCOUNT, 0, 文字数-TAGSTRLENS(カラム行:LINE)
+	PRINT  
+NEXT
+
+;;;ループやRESTART時に同じ物を表示しないようにCLEARLINEする関数
+@LOOP_CLEARLINE
+SIF VARLINE > 0
+	CLEARLINE LINECOUNT-VARLINE
+VARLINE = LINECOUNT
