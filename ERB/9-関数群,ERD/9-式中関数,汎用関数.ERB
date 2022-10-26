@@ -156,7 +156,7 @@ DO
 	;タグ付けされてれば処理実行
 	IF 始点 >= 0
 		;タグ付けまでの文章
-		平文 += SUBSTRINGU(行, 0, 始点)
+		平文 += SUBSTRINGU(行, 検索位置, 始点-検索位置)
 		;処理、内容、本文でSPLITする
 		SPLIT SUBSTRINGU(行, 始点+1, 文字数-1), ":", 字体
 		本文 = %字体:2%
@@ -198,3 +198,187 @@ NEXT
 SIF VARLINE > 0
 	CLEARLINE LINECOUNT-VARLINE
 VARLINE = LINECOUNT
+
+;;;キャラの最大HP
+@MAXHP, 対象
+#FUNCTION
+#DIM DYNAMIC 対象
+
+RETURNF 10+ステータス:対象:レベル+(ステータス:対象:耐久*2)
+
+;;;キャラの最大MP
+@MAXMP, 対象
+#FUNCTION
+#DIM DYNAMIC 対象
+
+RETURNF 5+(ステータス:対象:レベル/2)+ステータス:対象:知性
+
+;;;キャラの最大VP
+@MAXVP, 対象
+#FUNCTION
+#DIM DYNAMIC 対象
+
+RETURNF 5+(ステータス:対象:レベル/2)
+
+;;;上記SPACESとSTRLENSを組み合わせたもの
+@SPACESLENS, 文字列
+#FUNCTIONS
+#DIMS DYNAMIC 文字列
+#DIM DYNAMIC LCOUNT
+#DIMS DYNAMIC SPACE
+
+FOR LCOUNT, 0, STRLENS(文字列)
+	SPACE += " "
+NEXT
+
+RETURNF SPACE
+
+;;;条件がtrueだった場合は文字列を、falseなら文字数分の空白を返す
+@RETURNSPACE, 条件, 文字列
+#FUNCTIONS
+#DIM DYNAMIC 条件
+#DIMS DYNAMIC 文字列
+IF 条件
+	RETURNF 文字列
+ELSE
+	RETURNF SPACESLENS(文字列)
+ENDIF
+
+;;;指定したアイテムIDがどの部隊のものでもない（拠点で扱えるフリーなものか）を判別する
+@拠点アイテム, ITEMID
+#FUNCTION
+#DIM DYNAMIC ITEMID
+
+RETURNF DT_CELL_ISNULL("アイテム", ITEMID, "所有部隊") || DT_CELL_GET("アイテム", ITEMID, "所持部隊") == 0
+
+@アイテム名, ITEMID
+#FUNCTIONS
+#DIM DYNAMIC ITEMID
+
+RETURNF DT_CELL_GETS("アイテム", ITEMID, "名前")
+
+@レア度, ITEMID
+#FUNCTION
+#DIM DYNAMIC ITEMID
+
+RETURNF DT_CELL_GET("アイテム", ITEMID, "レア度")
+
+@装備中, ITEMID
+#FUNCTION
+#DIM DYNAMIC ITEMID
+
+SIF DT_CELL_ISNULL("アイテム", ITEMID, "装備中")
+	RETURNF 0
+RETURNF DT_CELL_GET("アイテム", ITEMID, "装備中")
+
+@装備手, ITEMID
+#FUNCTIONS
+#DIM DYNAMIC ITEMID
+
+SIF DT_CELL_ISNULL("アイテム", ITEMID, "装備手")
+	RETURNF ""
+RETURNF DT_CELL_GETS("アイテム", ITEMID, "装備手")
+
+@所有部隊, ITEMID
+#FUNCTION
+#DIM DYNAMIC ITEMID
+
+SIF DT_CELL_ISNULL("アイテム", ITEMID, "所有部隊")
+	RETURNF 0
+RETURNF DT_CELL_GET("アイテム", ITEMID, "所有部隊")
+
+@耐久値, ITEMID
+#FUNCTION
+#DIM DYNAMIC ITEMID
+
+SIF DT_CELL_ISNULL("アイテム", ITEMID, "耐久値")
+	RETURNF 0
+RETURNF DT_CELL_GET("アイテム", ITEMID, "耐久値")
+
+@分類, ITEMID
+#FUNCTIONS
+#DIM DYNAMIC ITEMID
+
+SIF DT_CELL_ISNULL("アイテム", ITEMID, "分類")
+	RETURNF ""
+RETURNF DT_CELL_GETS("アイテム", ITEMID, "分類")
+
+@攻撃力, ITEMID
+#FUNCTION
+#DIM DYNAMIC ITEMID
+
+SIF DT_CELL_ISNULL("アイテム", ITEMID, "攻撃力")
+	RETURNF 0
+RETURNF DT_CELL_GET("アイテム", ITEMID, "攻撃力")
+
+@防御力, ITEMID
+#FUNCTION
+#DIM DYNAMIC ITEMID
+
+SIF DT_CELL_ISNULL("アイテム", ITEMID, "防御力")
+	RETURNF 0
+RETURNF DT_CELL_GET("アイテム", ITEMID, "防御力")
+
+@命中率, ITEMID
+#FUNCTION
+#DIM DYNAMIC ITEMID
+
+SIF DT_CELL_ISNULL("アイテム", ITEMID, "命中率")
+	RETURNF 0
+RETURNF DT_CELL_GET("アイテム", ITEMID, "命中率")
+
+@特殊効果, ITEMID
+#FUNCTIONS
+#DIM DYNAMIC ITEMID
+
+SIF DT_CELL_ISNULL("アイテム", ITEMID, "特殊効果")
+	RETURNF ""
+RETURNF DT_CELL_GETS("アイテム", ITEMID, "特殊効果")
+
+@重量, ITEMID
+#FUNCTION
+#DIM DYNAMIC ITEMID
+
+SIF DT_CELL_ISNULL("アイテム", ITEMID, "重量")
+	RETURNF 0
+RETURNF DT_CELL_GET("アイテム", ITEMID, "重量")
+
+@要求ステータス, ITEMID, 要求ステータス
+#FUNCTION
+#DIM DYNAMIC ITEMID
+#DIMS DYNAMIC 要求ステータス
+
+SELECTCASE 要求ステータス
+	CASE "必要筋力", "筋力"
+		SIF DT_CELL_ISNULL("アイテム", ITEMID, "必要筋力")
+			RETURNF 0
+		RETURNF DT_CELL_GET("アイテム", ITEMID, "必要筋力")
+	CASE "必要耐久", "耐久"
+		SIF DT_CELL_ISNULL("アイテム", ITEMID, "必要耐久")
+			RETURNF 0
+		RETURNF DT_CELL_GET("アイテム", ITEMID, "必要耐久")
+	CASE "必要知性", "知性"
+		SIF DT_CELL_ISNULL("アイテム", ITEMID, "必要知性")
+			RETURNF 0
+		RETURNF DT_CELL_GET("アイテム", ITEMID, "必要知性")
+	CASE "必要器用", "器用"
+		SIF DT_CELL_ISNULL("アイテム", ITEMID, "必要器用")
+			RETURNF 0
+		RETURNF DT_CELL_GET("アイテム", ITEMID, "必要器用")
+	CASE "必要感覚", "感覚"
+		SIF DT_CELL_ISNULL("アイテム", ITEMID, "必要感覚")
+			RETURNF 0
+		RETURNF DT_CELL_GET("アイテム", ITEMID, "必要感覚")
+	CASE "必要運勢", "運勢"
+		SIF DT_CELL_ISNULL("アイテム", ITEMID, "必要運勢")
+			RETURNF 0
+		RETURNF DT_CELL_GET("アイテム", ITEMID, "必要運勢")
+ENDSELECT
+
+@説明, ITEMID
+#FUNCTIONS
+#DIM DYNAMIC ITEMID
+
+SIF DT_CELL_ISNULL("アイテム", ITEMID, "説明")
+	RETURNF ""
+RETURNF DT_CELL_GETS("アイテム", ITEMID, "説明")

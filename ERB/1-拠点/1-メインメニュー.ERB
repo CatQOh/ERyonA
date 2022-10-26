@@ -4,7 +4,7 @@ SIF 加入候補 == -1
 	CALL 加入候補生成
 
 DO
-	CALL カラム生成, "メインメニュー", "ダンジョン探索", "部隊編成", "人員の補充", "セーブ＆ロード"
+	CALL カラム生成, "メインメニュー", "ダンジョン探索", "部隊編成", "人員の補充", "アイテム", "セーブ＆ロード"
 	NOWCOLUMN = CRESULT:0
 	SELECTCASE カラム名:(CRESULT:0)
 		CASE "ダンジョン探索"
@@ -18,6 +18,15 @@ DO
 				CASE 10 TO 14
 					ステータス:対象:未加入 = 0
 					加入済み:(CRESULT:1-10) = 1
+			ENDSELECT
+		CASE "アイテム"
+			SELECTCASE CRESULT:1
+				CASE 201
+					SIF アイテムページ > 0
+						アイテムページ--
+				CASE 209
+					SIF アイテムページ < 9
+						アイテムページ++
 			ENDSELECT
 		CASE "セーブ＆ロード"
 			SELECTCASE CRESULT:1
@@ -56,7 +65,7 @@ FOR LCOUNT, 0, 5
 	SIF 加入済み:LCOUNT
 		CONTINUE
 	対象 = 加入候補:LCOUNT
-	カラム行:(LINE++) = 名前:%NAME:対象% レベル:{ステータス:対象:レベル} 職業:%CSTR:対象:職業% 性格:%CSTR:対象:性格% [{LCOUNT}] - 雇う
+	カラム行:(LINE++) = 名前:%NAME:対象% レベル:{ステータス:対象:レベル} 職業:%CSTR:対象:職業% (COLOR:lime:HP：{ステータス:対象:HP}/{MAXHP(対象)}) (COLOR:deepskyblue:MP：{ステータス:対象:MP}/{MAXMP(対象)}) (COLOR:yellow:VP：{ステータス:対象:VP}/{MAXVP(対象)}) [{LCOUNT}] - 雇う
 	FOR LCOUNT2, 0, 6, 2
 		カラム行:(LINE++) = %ERDNAME(ステータス, LCOUNT2)%%"■"*ステータス:対象:LCOUNT2%%"□"*(20-ステータス:対象:LCOUNT2)% {ステータス:対象:LCOUNT2} %ERDNAME(ステータス, (LCOUNT2+1))%%"■"*ステータス:対象:(LCOUNT2+1)%%"□"*(20-ステータス:対象:(LCOUNT2+1))% {ステータス:対象:(LCOUNT2+1)}
 	NEXT
@@ -70,6 +79,44 @@ SELECTCASE CRESULT:1
 		カラム行:(LINE++) = %NAME:(CRESULT:1-10)%を雇った
 ENDSELECT
 
+@メインメニュー_アイテム
+#DIM DYNAMIC LINE
+#DIM DYNAMIC LCOUNT
+#DIMS DYNAMIC 分類
+#DIMS DYNAMIC 装備条件
+#DIM DYNAMIC 要求値
+{
+#DIMS DYNAMIC 要求項目 =
+"必要筋力",
+"必要耐久",
+"必要知性",
+"必要器用",
+"必要感覚",
+"必要運勢",
+}
+
+FOR LCOUNT, アイテムページ*10, アイテムページ*10+10
+	IF アイテム名(LCOUNT) == ""
+		カラム行:(LINE++) = 
+	ELSE
+		カラム行:(LINE++) = [{LCOUNT}] %アイテム名(LCOUNT)%
+	ENDIF
+NEXT
+カラム行:(LINE++) = %RETURNSPACE(アイテムページ > 0, "[201] 前ページ")% %RETURNSPACE(DT_ROW_LENGTH("アイテム") > LCOUNT && 拠点アイテム(LCOUNT+1), "[209] 次ページ")%
+IF CRESULT:1 >= 0 && アイテム名(CRESULT:1) != ""
+	FOR LCOUNT, 0, VARSIZE("要求項目")
+		要求値 = 要求ステータス(CRESULT:1, 要求項目:LCOUNT)
+		SIF 要求値
+			装備条件 += @"%要求項目:LCOUNT%:{要求値} "
+	NEXT
+	分類 = %DT_CELL_GETS("アイテム", CRESULT:1, "分類")%
+	カラム行:(LINE++) = □%DT_CELL_GETS("アイテム", CRESULT:1, "名前")%（ID:{CRESULT:1}）
+	カラム行:(LINE++) = 　レア度:{レア度(CRESULT:1)} \@ 分類 == "消耗品" ? 残り使用回数 # 耐久値 \@:{耐久値(CRESULT:1)} 分類:%分類%
+	SIF 装備条件 != ""
+		カラム行:(LINE++) = 　%装備条件%
+	カラム行:(LINE++) = 　\@ 攻撃力(CRESULT:1) ? 攻撃力:{攻撃力(CRESULT:1)}%" "% #\@\@ 防御力(CRESULT:1) ? 防御力:{防御力(CRESULT:1)}%" "% #\@\@ 命中率(CRESULT:1) ? 命中率:{命中率(CRESULT:1)}%" "% #\@\@ 特殊効果(CRESULT:1) != "" ? 特殊効果:%特殊効果(CRESULT:1)%%" "% #\@\@ 重量(CRESULT:1) ? 重量:{重量(CRESULT:1)} #\@
+	カラム行:(LINE++) = 　%説明(CRESULT:1)%
+ENDIF
 
 @メインメニュー_セーブ＆ロード
 #DIM DYNAMIC LINE
@@ -111,6 +158,9 @@ FOR LCOUNT, 0, 5
 	FOR LCOUNT2, 1, ステータス:対象:レベル 
 		ステータス:対象:(RAND:6)++
 	NEXT
+	ステータス:対象:HP = MAXHP(対象)
+	ステータス:対象:MP = MAXMP(対象)
+	ステータス:対象:VP = MAXVP(対象)
 	;ステータスの設定 保留
 	ステータス:対象:未加入 = 1
 NEXT

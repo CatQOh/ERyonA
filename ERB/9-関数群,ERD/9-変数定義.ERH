@@ -8,6 +8,8 @@
 #DIMS カラム行, 100
 #DIMS カラム名, 10
 
+#DIM アイテムページ
+
 #DIM MAX_LINE
 
 #DIM SAVEDATA SAVEID
