@@ -21,12 +21,21 @@ DO
 			ENDSELECT
 		CASE "アイテム"
 			SELECTCASE CRESULT:1
+				CASE 0 TO 99
+					選択アイテム = CRESULT:1
 				CASE 201
 					SIF アイテムページ > 0
 						アイテムページ--
 				CASE 209
 					SIF アイテムページ < 9
 						アイテムページ++
+				CASE 210
+					IF レア度(選択アイテム)
+						売却アイテム名 = %アイテム名(選択アイテム)%
+						売却額 = レア度(選択アイテム)
+						資源 += 売却額
+						DT_ROW_REMOVE "アイテム", 選択アイテム
+					ENDIF
 			ENDSELECT
 		CASE "セーブ＆ロード"
 			SELECTCASE CRESULT:1
@@ -95,6 +104,8 @@ ENDSELECT
 "必要運勢",
 }
 
+カラム行:(LINE++) = □資源:{資源}
+
 FOR LCOUNT, アイテムページ*10, アイテムページ*10+10
 	IF アイテム名(LCOUNT) == ""
 		カラム行:(LINE++) = 
@@ -103,7 +114,9 @@ FOR LCOUNT, アイテムページ*10, アイテムページ*10+10
 	ENDIF
 NEXT
 カラム行:(LINE++) = %RETURNSPACE(アイテムページ > 0, "[201] 前ページ")% %RETURNSPACE(DT_ROW_LENGTH("アイテム") > LCOUNT && 拠点アイテム(LCOUNT+1), "[209] 次ページ")%
-IF CRESULT:1 >= 0 && アイテム名(CRESULT:1) != ""
+IF CRESULT:1 == 210
+	カラム行:(LINE++) = 　%売却アイテム名%を売却しました（資源{売却額}個分）
+ELSEIF CRESULT:1 >= 0 && アイテム名(CRESULT:1) != ""
 	FOR LCOUNT, 0, VARSIZE("要求項目")
 		要求値 = 要求ステータス(CRESULT:1, 要求項目:LCOUNT)
 		SIF 要求値
@@ -116,6 +129,7 @@ IF CRESULT:1 >= 0 && アイテム名(CRESULT:1) != ""
 		カラム行:(LINE++) = 　%装備条件%
 	カラム行:(LINE++) = 　\@ 攻撃力(CRESULT:1) ? 攻撃力:{攻撃力(CRESULT:1)}%" "% #\@\@ 防御力(CRESULT:1) ? 防御力:{防御力(CRESULT:1)}%" "% #\@\@ 命中率(CRESULT:1) ? 命中率:{命中率(CRESULT:1)}%" "% #\@\@ 特殊効果(CRESULT:1) != "" ? 特殊効果:%特殊効果(CRESULT:1)%%" "% #\@\@ 重量(CRESULT:1) ? 重量:{重量(CRESULT:1)} #\@
 	カラム行:(LINE++) = 　%説明(CRESULT:1)%
+	カラム行:(LINE++) = 　[210] 売却する（資源{レア度(CRESULT:1)}個分）
 ENDIF
 
 @メインメニュー_セーブ＆ロード
