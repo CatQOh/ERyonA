@@ -249,7 +249,7 @@ ENDIF
 #FUNCTION
 #DIM DYNAMIC ITEMID
 
-RETURNF DT_CELL_ISNULL("アイテム", ITEMID, "所有部隊") || DT_CELL_GET("アイテム", ITEMID, "所持部隊") == 0
+RETURNF (DT_CELL_ISNULL("アイテム", ITEMID, "所有部隊") || DT_CELL_GET("アイテム", ITEMID, "所持部隊") == 0) && (DT_CELL_ISNULL("アイテム", ITEMID, "装備中") || DT_CELL_GET("アイテム", ITEMID, "装備中") == 0)
 
 @アイテム名, ITEMID
 #FUNCTIONS
@@ -382,3 +382,8 @@ ENDSELECT
 SIF DT_CELL_ISNULL("アイテム", ITEMID, "説明")
 	RETURNF ""
 RETURNF DT_CELL_GETS("アイテム", ITEMID, "説明")
+
+@アイテム削除, ITEMID
+#DIM DYNAMIC ITEMID
+
+DT_ROW_REMOVE "アイテム", DT_CELL_GET("アイテム", ITEMID, "id")

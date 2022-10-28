@@ -21,6 +21,18 @@ SELECTCASE RESULT
 ENDSELECT
 [SKIPEND]
 
+CALL COLUMNCREATE, 0
+CALL COLUMNRESIZE, 0, 500, 500
+CALL COLUMNMOVE, 0, 500, 700
+CALL COLUMNPRINTL, 0, "[1]TEST"
+CALL COLUMNPRINTL, 0, "[2]TEST"
+
+CALL COLUMNSHOW
+
+PRINTL
+PRINTW
+
+
 DO
 	CALL カラム生成, "タイトル", "最初から始める", "続きから始める"
 	SELECTCASE CRESULT:0
@@ -45,22 +57,23 @@ LOOP 1
 @タイトル_最初から始める
 #DIM DYNAMIC LCOUNT
 #DIM DYNAMIC LINE
-カラム行:(LINE++) = era未定 作者:Enter
+
+CALL COLUMNPRINTL, 0, "era未定 作者:Enter"
 FOR LCOUNT, 0, 10
 	SELECTCASE CHKDATA(LCOUNT)
 		CASE 0
-			カラム行:(LINE++) = [{LCOUNT}] %RESULTS%
+			CALL COLUMNPRINTL, 0, @"[{LCOUNT}] %RESULTS%"
 		CASE 1
-			カラム行:(LINE++) = [{LCOUNT}] ----
+			CALL COLUMNPRINTL, 0, @"[{LCOUNT}] ----"
 			RESETCOLOR
 		CASE 2 TO 4
-			カラム行:(LINE++) = [{LCOUNT}] 無効なセーブデータ
+			CALL COLUMNPRINTL, 0, @"[{LCOUNT}] 無効なセーブデータ"
 	ENDSELECT
 NEXT
 
 IF INRANGE(CRESULT:1, 0, 9)
-	カラム行:(LINE++) = {CRESULT:1}番には既にセーブデータが存在します。上書きしてニューゲーム開始しますか？
-	カラム行:(LINE++) = [{CRESULT:1+10}] はい [20] いいえ
+	CALL COLUMNPRINTL, 0, @"{CRESULT:1}番には既にセーブデータが存在します。上書きしてニューゲーム開始しますか？"
+	CALL COLUMNPRINTL, 0, @"[{CRESULT:1+10}] はい [20] いいえ"
 ENDIF
 
 @タイトル_続きから始める

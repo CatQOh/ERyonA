@@ -16,7 +16,7 @@ DO
 		CASE "人員の補充"
 			SELECTCASE CRESULT:1
 				CASE 10 TO 14
-					ステータス:対象:未加入 = 0
+					ステータス:(加入候補:(CRESULT:1-10)):未加入 = 0
 					加入済み:(CRESULT:1-10) = 1
 			ENDSELECT
 		CASE "アイテム"
@@ -34,7 +34,7 @@ DO
 						売却アイテム名 = %アイテム名(選択アイテム)%
 						売却額 = レア度(選択アイテム)
 						資源 += 売却額
-						DT_ROW_REMOVE "アイテム", 選択アイテム
+						CALL アイテム削除(選択アイテム)
 					ENDIF
 			ENDSELECT
 		CASE "セーブ＆ロード"
@@ -74,7 +74,7 @@ FOR LCOUNT, 0, 5
 	SIF 加入済み:LCOUNT
 		CONTINUE
 	対象 = 加入候補:LCOUNT
-	カラム行:(LINE++) = 名前:%NAME:対象% レベル:{ステータス:対象:レベル} 職業:%CSTR:対象:職業% (COLOR:lime:HP：{ステータス:対象:HP}/{MAXHP(対象)}) (COLOR:deepskyblue:MP：{ステータス:対象:MP}/{MAXMP(対象)}) (COLOR:yellow:VP：{ステータス:対象:VP}/{MAXVP(対象)}) [{LCOUNT}] - 雇う
+	カラム行:(LINE++) = 名前:%NAME:対象% レベル:{ステータス:対象:レベル} 職業:%CSTR:対象:職業% (COLOR:lime:HP：{ステータス:対象:HP}/{MAXHP(対象)}) (COLOR:deepskyblue:MP：{ステータス:対象:MP}/{MAXMP(対象)}) (COLOR:yellow:VP：{ステータス:対象:VP}/{MAXVP(対象)}) [{LCOUNT}] - 雇う\@ ステータス:対象:レベル > 1 ? （資源{ステータス:対象:レベル}個必要）#\@
 	FOR LCOUNT2, 0, 6, 2
 		カラム行:(LINE++) = %ERDNAME(ステータス, LCOUNT2)%%"■"*ステータス:対象:LCOUNT2%%"□"*(20-ステータス:対象:LCOUNT2)% {ステータス:対象:LCOUNT2} %ERDNAME(ステータス, (LCOUNT2+1))%%"■"*ステータス:対象:(LCOUNT2+1)%%"□"*(20-ステータス:対象:(LCOUNT2+1))% {ステータス:対象:(LCOUNT2+1)}
 	NEXT
@@ -85,7 +85,11 @@ SELECTCASE CRESULT:1
 		カラム行:(LINE++) = %NAME:(加入候補:(CRESULT:1))%を雇いますか？
 		カラム行:(LINE++) = [{CRESULT:1+10}] はい [20] いいえ
 	CASE 10 TO 14
-		カラム行:(LINE++) = %NAME:(CRESULT:1-10)%を雇った
+		IF ステータス:対象:レベル > 1 && 資源 < ステータス:対象:レベル
+			カラム行:(LINE++) = 資源が足りません
+			RETURN
+		ENDIF
+		カラム行:(LINE++) = %NAME:(加入候補:(CRESULT:1-10))%を雇った
 ENDSELECT
 
 @メインメニュー_アイテム
@@ -94,6 +98,7 @@ ENDSELECT
 #DIMS DYNAMIC 分類
 #DIMS DYNAMIC 装備条件
 #DIM DYNAMIC 要求値
+#DIMS DYNAMIC 文字色
 {
 #DIMS DYNAMIC 要求項目 =
 "必要筋力",
@@ -107,10 +112,22 @@ ENDSELECT
 カラム行:(LINE++) = □資源:{資源}
 
 FOR LCOUNT, アイテムページ*10, アイテムページ*10+10
-	IF アイテム名(LCOUNT) == ""
+	IF !拠点アイテム(LCOUNT)
 		カラム行:(LINE++) = 
 	ELSE
-		カラム行:(LINE++) = [{LCOUNT}] %アイテム名(LCOUNT)%
+		SELECTCASE レア度(LCOUNT)
+			CASE 1
+				文字色 = silver
+			CASE 2
+				文字色 = lime
+			CASE 3
+				文字色 = deepskyblue
+			CASE 4
+				文字色 = purple
+			CASE IS >= 5
+				文字色 = gold
+		ENDSELECT
+		カラム行:(LINE++) = (COLOR:%文字色%:[{LCOUNT}] %アイテム名(LCOUNT)%（レア度：{レア度(LCOUNT)}）)
 	ENDIF
 NEXT
 カラム行:(LINE++) = %RETURNSPACE(アイテムページ > 0, "[201] 前ページ")% %RETURNSPACE(DT_ROW_LENGTH("アイテム") > LCOUNT && 拠点アイテム(LCOUNT+1), "[209] 次ページ")%
@@ -166,7 +183,13 @@ FOR LCOUNT, 0, 5
 	加入候補:LCOUNT = CHARANUM-1
 	対象 = 加入候補:LCOUNT
 	NAME:対象 = %ランダム命名(RAND(1, 4))%
-	ステータス:対象:レベル = RAND(6, 11)
+	;3人目までが資源が必要 4～5人目は志願兵
+	SELECTCASE LCOUNT
+		CASE 0 TO 2
+			ステータス:対象:レベル = RAND(6, 11)
+		CASE 3, 4
+			ステータス:対象:レベル = 1
+	ENDSELECT
 	CSTR:対象:職業 = %職業一覧:(RAND:VARSIZE("職業一覧"))%
 	CALL 職業初期値, CSTR:対象:職業, 対象
 	FOR LCOUNT2, 1, ステータス:対象:レベル 
