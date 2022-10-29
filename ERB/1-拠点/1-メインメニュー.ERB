@@ -51,17 +51,15 @@ DO
 LOOP 1
 
 @メインメニュー_ダンジョン探索
-#DIM DYNAMIC LINE
-
-カラム行:(LINE++) = [0] - ダンジョン探索です
-カラム行:(LINE++) = [1] - 1です
+CALL COLUMNPRINTL, 0, "[0] - ダンジョン探索です"
+CALL COLUMNPRINTL, 0, "[1] - 1です"
 
 
 @メインメニュー_部隊編成
 #DIM DYNAMIC LCOUNT
 
 FOR LCOUNT, 1, 11
-	カラム行:LCOUNT = [{LCOUNT}] 部隊{LCOUNT}
+	CALL COLUMNPRINTL, 0, @"[{LCOUNT}] 部隊{LCOUNT}"
 NEXT
 
 @メインメニュー_人員の補充
@@ -70,26 +68,31 @@ NEXT
 #DIM DYNAMIC 対象
 #DIM DYNAMIC LINE
 
+CALL COLUMNPRINTL ,0, @"□所持資源:{資源}個"
 FOR LCOUNT, 0, 5
 	SIF 加入済み:LCOUNT
 		CONTINUE
 	対象 = 加入候補:LCOUNT
-	カラム行:(LINE++) = 名前:%NAME:対象% レベル:{ステータス:対象:レベル} 職業:%CSTR:対象:職業% (COLOR:lime:HP：{ステータス:対象:HP}/{MAXHP(対象)}) (COLOR:deepskyblue:MP：{ステータス:対象:MP}/{MAXMP(対象)}) (COLOR:yellow:VP：{ステータス:対象:VP}/{MAXVP(対象)}) [{LCOUNT}] - 雇う\@ ステータス:対象:レベル > 1 ? （資源{ステータス:対象:レベル}個必要）#\@
+	CALL COLUMNPRINT, 0, @"名前:%NAME:対象% レベル:{ステータス:対象:レベル} 職業:%CSTR:対象:職業% "
+	CALL COLUMNPRINT, 0, @"HP:{ステータス:対象:HP}/{MAXHP(対象)} ", "lime"
+	CALL COLUMNPRINT, 0, @"MP:{ステータス:対象:MP}/{MAXMP(対象)} ", "deepskyblue"
+	CALL COLUMNPRINT, 0, @"VP:{ステータス:対象:VP}/{MAXVP(対象)} ", "yellow"
+	CALL COLUMNPRINTL, 0, @"[{LCOUNT}] - 雇う\@ ステータス:対象:レベル > 1 ? (資源{ステータス:対象:レベル}個必要）#\@"
 	FOR LCOUNT2, 0, 6, 2
-		カラム行:(LINE++) = %ERDNAME(ステータス, LCOUNT2)%%"■"*ステータス:対象:LCOUNT2%%"□"*(20-ステータス:対象:LCOUNT2)% {ステータス:対象:LCOUNT2} %ERDNAME(ステータス, (LCOUNT2+1))%%"■"*ステータス:対象:(LCOUNT2+1)%%"□"*(20-ステータス:対象:(LCOUNT2+1))% {ステータス:対象:(LCOUNT2+1)}
+		CALL COLUMNPRINTL, 0, @"%ERDNAME(ステータス, LCOUNT2)%%"■"*ステータス:対象:LCOUNT2%%"□"*(20-ステータス:対象:LCOUNT2)% {ステータス:対象:LCOUNT2} %ERDNAME(ステータス, (LCOUNT2+1))%%"■"*ステータス:対象:(LCOUNT2+1)%%"□"*(20-ステータス:対象:(LCOUNT2+1))% {ステータス:対象:(LCOUNT2+1)}"
 	NEXT
-	カラム行:(LINE++) = 
+	CALL COLUMNPRINTL, 0, ""
 NEXT
 SELECTCASE CRESULT:1
 	CASE 0 TO 4
-		カラム行:(LINE++) = %NAME:(加入候補:(CRESULT:1))%を雇いますか？
-		カラム行:(LINE++) = [{CRESULT:1+10}] はい [20] いいえ
+		CALL COLUMNPRINTL, 0, @"%NAME:(加入候補:(CRESULT:1))%を雇いますか？"
+		CALL COLUMNPRINTL, 0, @"[{CRESULT:1+10}] はい [20] いいえ"
 	CASE 10 TO 14
 		IF ステータス:対象:レベル > 1 && 資源 < ステータス:対象:レベル
-			カラム行:(LINE++) = 資源が足りません
+			CALL COLUMNPRINTL, 0, "資源が足りません"
 			RETURN
 		ENDIF
-		カラム行:(LINE++) = %NAME:(加入候補:(CRESULT:1-10))%を雇った
+		CALL COLUMNPRINTL, 0, @"%NAME:(加入候補:(CRESULT:1-10))%を雇った"
 ENDSELECT
 
 @メインメニュー_アイテム
@@ -109,11 +112,11 @@ ENDSELECT
 "必要運勢",
 }
 
-カラム行:(LINE++) = □資源:{資源}
+CALL COLUMNPRINTL ,0, @"□所持資源:{資源}個 倉庫:{拠点アイテム総数()}/{倉庫}"
 
 FOR LCOUNT, アイテムページ*10, アイテムページ*10+10
 	IF !拠点アイテム(LCOUNT)
-		カラム行:(LINE++) = 
+		CALL COLUMNPRINTL, 0, ""
 	ELSE
 		SELECTCASE レア度(LCOUNT)
 			CASE 1
@@ -127,12 +130,12 @@ FOR LCOUNT, アイテムページ*10, アイテムページ*10+10
 			CASE IS >= 5
 				文字色 = gold
 		ENDSELECT
-		カラム行:(LINE++) = (COLOR:%文字色%:[{LCOUNT}] %アイテム名(LCOUNT)%（レア度：{レア度(LCOUNT)}）)
+		CALL COLUMNPRINTL, 0, @"[{LCOUNT}] %アイテム名(LCOUNT)%(レア度:{レア度(LCOUNT)})", 文字色
 	ENDIF
 NEXT
-カラム行:(LINE++) = %RETURNSPACE(アイテムページ > 0, "[201] 前ページ")% %RETURNSPACE(DT_ROW_LENGTH("アイテム") > LCOUNT && 拠点アイテム(LCOUNT+1), "[209] 次ページ")%
+CALL COLUMNPRINTL, 0, @"%RETURNSPACE(アイテムページ > 0, "[201] 前ページ")% %RETURNSPACE(DT_ROW_LENGTH("アイテム") > LCOUNT && 拠点アイテム(LCOUNT+1), "[209] 次ページ")%"
 IF CRESULT:1 == 210
-	カラム行:(LINE++) = 　%売却アイテム名%を売却しました（資源{売却額}個分）
+	CALL COLUMNPRINTL, 0, @"　%売却アイテム名%を売却しました(資源{売却額}個分)"
 ELSEIF CRESULT:1 >= 0 && アイテム名(CRESULT:1) != ""
 	FOR LCOUNT, 0, VARSIZE("要求項目")
 		要求値 = 要求ステータス(CRESULT:1, 要求項目:LCOUNT)
@@ -140,37 +143,37 @@ ELSEIF CRESULT:1 >= 0 && アイテム名(CRESULT:1) != ""
 			装備条件 += @"%要求項目:LCOUNT%:{要求値} "
 	NEXT
 	分類 = %DT_CELL_GETS("アイテム", CRESULT:1, "分類")%
-	カラム行:(LINE++) = □%DT_CELL_GETS("アイテム", CRESULT:1, "名前")%（ID:{CRESULT:1}）
-	カラム行:(LINE++) = 　レア度:{レア度(CRESULT:1)} \@ 分類 == "消耗品" ? 残り使用回数 # 耐久値 \@:{耐久値(CRESULT:1)} 分類:%分類%
+	CALL COLUMNPRINTL, 0, @"□%DT_CELL_GETS("アイテム", CRESULT:1, "名前")%（ID:{CRESULT:1}）"
+	CALL COLUMNPRINTL, 0, @"　レア度:{レア度(CRESULT:1)} \@ 分類 == "消耗品" ? 残り使用回数 # 耐久値 \@:{耐久値(CRESULT:1)} 分類:%分類%"
 	SIF 装備条件 != ""
-		カラム行:(LINE++) = 　%装備条件%
-	カラム行:(LINE++) = 　\@ 攻撃力(CRESULT:1) ? 攻撃力:{攻撃力(CRESULT:1)}%" "% #\@\@ 防御力(CRESULT:1) ? 防御力:{防御力(CRESULT:1)}%" "% #\@\@ 命中率(CRESULT:1) ? 命中率:{命中率(CRESULT:1)}%" "% #\@\@ 特殊効果(CRESULT:1) != "" ? 特殊効果:%特殊効果(CRESULT:1)%%" "% #\@\@ 重量(CRESULT:1) ? 重量:{重量(CRESULT:1)} #\@
-	カラム行:(LINE++) = 　%説明(CRESULT:1)%
-	カラム行:(LINE++) = 　[210] 売却する（資源{レア度(CRESULT:1)}個分）
+		CALL COLUMNPRINTL, 0, @"　%装備条件%"
+	CALL COLUMNPRINTL, 0, @"　\@ 攻撃力(CRESULT:1) ? 攻撃力:{攻撃力(CRESULT:1)}%" "% #\@\@ 防御力(CRESULT:1) ? 防御力:{防御力(CRESULT:1)}%" "% #\@\@ 命中率(CRESULT:1) ? 命中率:{命中率(CRESULT:1)}%" "% #\@\@ 特殊効果(CRESULT:1) != "" ? 特殊効果:%特殊効果(CRESULT:1)%%" "% #\@\@ 重量(CRESULT:1) ? 重量:{重量(CRESULT:1)} #\@"
+	CALL COLUMNPRINTL, 0, @"　%説明(CRESULT:1)%"
+	CALL COLUMNPRINTL, 0, @"　[210] 売却する（資源{レア度(CRESULT:1)}個分）"
 ENDIF
 
 @メインメニュー_セーブ＆ロード
 #DIM DYNAMIC LINE
 #DIM DYNAMIC LCOUNT
 
-カラム行:(LINE++) = □セーブ
-カラム行:(LINE++) = [10] セーブする（セーブデータID:{SAVEID}）
-カラム行:(LINE++) = 
-カラム行:(LINE++) = □ロード
+CALL COLUMNPRINTL, 0, "□セーブ"
+CALL COLUMNPRINTL, 0, @"[10] セーブする（セーブデータID:{SAVEID}）"
+CALL COLUMNPRINTL, 0, ""
+CALL COLUMNPRINTL, 0, @"□ロード"
 FOR LCOUNT, 0, 10
 	SELECTCASE CHKDATA(LCOUNT)
 		CASE 0
-			カラム行:(LINE++) = [{LCOUNT}] %RESULTS%
+			CALL COLUMNPRINTL, 0, @"[{LCOUNT}] %RESULTS%"
 		CASE 1
-			カラム行:(LINE++) = (COLOR:gray:[{LCOUNT}] ----)
+			CALL COLUMNPRINTL, 0, @"[{LCOUNT}] ----", "gray"
 			RESETCOLOR
 		CASE 2 TO 4
-			カラム行:(LINE++) = (COLOR:gray:[{LCOUNT}] 無効なセーブデータ)
+			CALL COLUMNPRINTL, 0, @"[{LCOUNT}] 無効なセーブデータ", "gray"
 	ENDSELECT
 NEXT
-カラム行:(LINE++) = 
+CALL COLUMNPRINTL, 0, ""
 SIF CRESULT:1 == 10
-	カラム行:(LINE++) = セーブしました
+	CALL COLUMNPRINTL, 0, "セーブしました"
 
 @加入候補生成
 #DIM DYNAMIC LCOUNT

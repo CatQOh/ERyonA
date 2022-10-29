@@ -249,7 +249,23 @@ ENDIF
 #FUNCTION
 #DIM DYNAMIC ITEMID
 
+SIF DT_CELL_GETS("アイテム", ITEMID, "名前") == ""
+	RETURNF 0
+
 RETURNF (DT_CELL_ISNULL("アイテム", ITEMID, "所有部隊") || DT_CELL_GET("アイテム", ITEMID, "所持部隊") == 0) && (DT_CELL_ISNULL("アイテム", ITEMID, "装備中") || DT_CELL_GET("アイテム", ITEMID, "装備中") == 0)
+
+@拠点アイテム総数, ARG
+#FUNCTION
+#DIM DYNAMIC ITEMCOUNT
+#DIM DYNAMIC LCOUNT
+
+FOR LCOUNT, 0, DT_ROW_LENGTH("アイテム")
+	SIF (DT_CELL_ISNULL("アイテム", LCOUNT, "所有部隊") || DT_CELL_GET("アイテム", LCOUNT, "所持部隊") == 0) && (DT_CELL_ISNULL("アイテム", LCOUNT, "装備中") || DT_CELL_GET("アイテム", LCOUNT, "装備中") == 0)
+		ITEMCOUNT++
+NEXT
+
+RETURNF ITEMCOUNT
+
 
 @アイテム名, ITEMID
 #FUNCTIONS
