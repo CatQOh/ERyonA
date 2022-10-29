@@ -11,7 +11,7 @@
 #DIMS DYNAMIC カラムメニュー, 10
 #DIM DYNAMIC カラム数
 #DIMS カラム
-;REDRAW 0
+REDRAW 0
 CALL LOOP_CLEARLINE
 
 ARRAYCOPY "カラムメニュー", "カラム名"
@@ -341,13 +341,12 @@ ENDIF
 
 COLUMN:ARG:7 = 方向
 
-@COLUMNPRINT, ARG, ARGS
-COLUMN:ARG:9 = 1
-CALL COLUMNSHIFT(ARG, ARGS)
+@COLUMNPRINT, ARG, ARGS, ARGS:1
+CALL COLUMNSHIFT(ARG, ARGS, ARGS:1)
 
-@COLUMNPRINTL, ARG, ARGS
-CALL COLUMNSHIFT(ARG, ARGS)
-COLUMN:ARG:9 = 0
+@COLUMNPRINTL, ARG, ARGS, ARGS:1
+CALL COLUMNSHIFT(ARG, ARGS, ARGS:1)
+COLUMN:ARG:9++
 
 @COLUMNPRINTW, ARG, ARGS
 CALL COLUMNSHIFT(ARG, ARGS)
@@ -355,29 +354,40 @@ COLUMN:ARG:9 = 0
 
 CALL COLUMNWAIT
 
-@COLUMNSHIFT, ARG, ARGS
+@COLUMNSHIFT, ARG, ARGS, ETC
 #DIM DYNAMIC LCOUNT
+#DIMS DYNAMIC ETC
 
-IF COLUMN:ARG:9
-	COLUMNLOG:ARG:0 += ARGS
-ELSE
-	FOR LCOUNT, 0, VARSIZE("COLUMNLOG", 2)
-		IF COLUMNLOG:ARG:LCOUNT == ""
-			COLUMNLOG:ARG:LCOUNT = %ARGS%
-			BREAK
-		ENDIF
-	NEXT
-	DEBUGPRINTFORML COLUMNSHIFT {LCOUNT} %ARGS%
+SIF COLOR_FROMNAME(ETC) >= 0
+	ARGS = <font color='%ETC%'>%ARGS%</font>
+
+;IF COLUMN:ARG:9
+;	COLUMNLOG:ARG:0 += ARGS
+;ELSE
+	;FOR LCOUNT, 0, VARSIZE("COLUMNLOG", 2)
+		;IF COLUMNLOG:ARG:LCOUNT == ""
+			;IF COLUMN:ARG:9
+				COLUMNLOG:ARG:(COLUMN:ARG:9) += ARGS
+			;ELSE
+			;	COLUMNLOG:ARG:LCOUNT = %ARGS%
+			;ENDIF
+			;BREAK
+		;ENDIF
+	;NEXT
+	;DEBUGPRINTFORML COLUMNSHIFT {LCOUNT} %ARGS%
+	[SKIPSTART]
 	IF LCOUNT == VARSIZE("COLUMNLOG", 2)
 		FOR LCOUNT, 0, VARSIZE("COLUMNLOG", 2)
 			IF LCOUNT == VARSIZE("COLUMNLOG", 2)-1
-				COLUMNLOG:ARG:LCOUNT = %ARGS%
+				IF COLUMON:ARG:9
+					COLUMNLOG:ARG:LCOUNT = %ARGS%
 			ELSE
 				COLUMNLOG:ARG:LCOUNT = %COLUMNLOG:ARG:(LCOUNT+1)%
 			ENDIF
 		NEXT
 	ENDIF
-ENDIF
+	[SKIPEND]
+;ENDIF
 
 @COLUMNSHOW
 #DIM DYNAMIC LCOUNT
@@ -387,17 +397,21 @@ ENDIF
 #DIMS DYNAMIC REVERSELOG, 10000
 #DIM DYNAMIC LOGCOUNT
 
-#DIMS DYNAMIC 本文
+#DIMS DYNAMIC 本文, 10
 #DIMS DYNAMIC ツールチップ
 #DIMS DYNAMIC タグ
-;ボタンの数値が指定されたボタン番号と一致すると困るので、ボタン化されなさそうな数値に 元ネタ分かる人はすごい
-#DIM DYNAMIC ボタン = -3189415
-#DIMS DYNAMIC 文字列ボタン
+#DIM DYNAMIC ボタン, 10
+#DIMS DYNAMIC 文字列ボタン, 10
 #DIM DYNAMIC ボタン化
 #DIMS DYNAMIC 文字色
 #DIM DYNAMIC 括弧, 2
+#DIM DYNAMIC ボタン数
+#DIM DYNAMIC 開始位置
 
 CLEARLINE 1
+
+;ボタンの数値が指定されたボタン番号と一致すると困るので、ボタン化されなさそうな数値に 元ネタ分かる人はすごい
+VARSET ボタン, -3189415
 
 HTML += "<nobr>"
 
@@ -405,29 +419,48 @@ FOR LCOUNT, 0, 10
 	SIF COLUMN:LCOUNT:0 == 0
 		CONTINUE
 
+	COLUMN:LCOUNT:9 = 0
+
 	HTML += @"<div width='{COLUMN:LCOUNT:1}' height='{COLUMN:LCOUNT:2}' xpos='{COLUMN:LCOUNT:3}' ypos='{COLUMN:LCOUNT:4}' depth='1'>"
 
 	FOR LCOUNT2, 0, VARSIZE("COLUMNLOG", 2)
 		SIF MAX_LINE <= LCOUNT2
 			BREAK
 		IF COLUMNLOG:LCOUNT:LCOUNT2 != ""
-			本文 = %COLUMNLOG:LCOUNT:LCOUNT2%
-			括弧 = STRFINDU(本文, "[")
-			括弧:1 = STRFINDU(本文, "]")
+			本文:0 = %COLUMNLOG:LCOUNT:LCOUNT2%
+			開始位置 = 0
+			FOR LCOUNT3, 0, 10
+				括弧 = STRFINDU(本文:LCOUNT3, "[")
+				括弧:1 = STRFINDU(本文:LCOUNT3, "]")
 
-			IF 括弧 != -1 && 括弧:1 != -1
-				;STRFIND系使うと"[～]"の範囲を取得してるので"["と"]"を省くために+1と-1する
-				文字列ボタン = %SUBSTRINGU(本文, 括弧+1, 括弧:1-括弧-1)%
-				SIF ISNUMERIC(文字列ボタン)
-					ボタン = TOINT(文字列ボタン)
-			ENDIF
-			DEBUGPRINTFORML %本文% {ボタン}
-			IF ボタン != -3189415
-				HTML += @"<button value ='{ボタン}'>%本文%</button><br>"
-			ELSE
-				HTML += @"%本文%<br>"
-			ENDIF
-			ボタン = -3189415
+				IF 括弧 != -1 && 括弧:1 != -1
+					;STRFIND系使うと"[～]"の範囲を取得してるので"["と"]"を省くために+1と-1する
+					文字列ボタン:LCOUNT3 = %SUBSTRINGU(本文:LCOUNT3, 括弧+1, 括弧:1-括弧-1)%
+					SIF ISNUMERIC(文字列ボタン:LCOUNT3)
+						ボタン:LCOUNT3 = TOINT(文字列ボタン:LCOUNT3)
+				ENDIF
+				開始位置 = STRFINDU(本文:LCOUNT3, "[", 括弧:1)
+				DEBUGPRINTFORML 開始位置 {開始位置}
+				IF 開始位置 > 0
+					本文:(LCOUNT3+1) = %SUBSTRINGU(本文:LCOUNT3, 開始位置, -1)%
+					本文:LCOUNT3 = %SUBSTRINGU(本文:LCOUNT3, 括弧, 開始位置-括弧)%
+				ELSE
+					BREAK
+				ENDIF
+			NEXT
+			FOR LCOUNT3, 0, 10
+				DEBUGPRINTFORML %本文:LCOUNT3% {ボタン:LCOUNT3}
+				IF ボタン:LCOUNT3 != -3189415
+					HTML += @"<button value ='{ボタン:LCOUNT3}'>%本文:LCOUNT3%</button>"
+				ELSEIF 文字列ボタン:LCOUNT3 != ""
+					HTML += @"<button value ='%文字列ボタン:LCOUNT3%'>%本文:LCOUNT3%</button>"
+				ELSE
+					HTML += @"%本文:LCOUNT3%"
+				ENDIF
+			NEXT
+			HTML += "<br>"
+			VARSET ボタン, -3189415
+			VARSET 文字列ボタン
 		ENDIF
 	NEXT
 	[SKIPSTART]
@@ -458,5 +491,6 @@ NEXT
 HTML += "</div></nobr>"
 
 HTML_PRINT HTML
+
 
 ;WAIT

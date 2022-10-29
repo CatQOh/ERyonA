@@ -19,7 +19,6 @@ SELECTCASE RESULT
 		JUMP ニューゲーム
 	CASE 1
 ENDSELECT
-[SKIPEND]
 
 CALL COLUMNCREATE, 0
 CALL COLUMNRESIZE, 0, 500, 500
@@ -31,7 +30,9 @@ CALL COLUMNSHOW
 
 PRINTL
 PRINTW
+[SKIPEND]
 
+CALL COLUMNCREATE, 0
 
 DO
 	CALL カラム生成, "タイトル", "最初から始める", "続きから始める"
@@ -64,7 +65,7 @@ FOR LCOUNT, 0, 10
 		CASE 0
 			CALL COLUMNPRINTL, 0, @"[{LCOUNT}] %RESULTS%"
 		CASE 1
-			CALL COLUMNPRINTL, 0, @"[{LCOUNT}] ----"
+			CALL COLUMNPRINTL, 0, @"[{LCOUNT}] ----", "gray"
 			RESETCOLOR
 		CASE 2 TO 4
 			CALL COLUMNPRINTL, 0, @"[{LCOUNT}] 無効なセーブデータ"
@@ -73,7 +74,7 @@ NEXT
 
 IF INRANGE(CRESULT:1, 0, 9)
 	CALL COLUMNPRINTL, 0, @"{CRESULT:1}番には既にセーブデータが存在します。上書きしてニューゲーム開始しますか？"
-	CALL COLUMNPRINTL, 0, @"[{CRESULT:1+10}] はい [20] いいえ"
+	CALL COLUMNPRINT, 0, @"[{CRESULT:1+10}] はい [20] いいえ"
 ENDIF
 
 @タイトル_続きから始める
