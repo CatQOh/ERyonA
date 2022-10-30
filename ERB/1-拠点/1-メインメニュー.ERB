@@ -9,16 +9,44 @@ DO
 	SELECTCASE カラム名:(CRESULT:0)
 		CASE "ダンジョン探索"
 		CASE "部隊編成"
-			SELECTCASE CRESULT:1
-				CASE 1, 10
-					CALL 部隊編成, CRESULT:1
-			ENDSELECT
+			IF 部隊編成
+				IF 部隊スロット != -1
+					IF CRESULT:1 == 0
+						部隊スロット = -1
+					ELSE
+						SIF 部隊メンバー:部隊編成:部隊スロット
+							ステータス:(部隊メンバー:部隊編成:部隊スロット):所属部隊 = 0
+						部隊メンバー:部隊編成:部隊スロット = CRESULT:1
+						ステータス:(CRESULT:1):所属部隊 = 部隊編成
+						CRESULT:1 = 0
+						部隊スロット = -1
+					ENDIF
+				ELSE
+					IF CRESULT:1 == 10
+						部隊編成 = 0
+					ELSE
+						部隊スロット = CRESULT:1
+					ENDIF
+				ENDIF
+			ELSE
+				SELECTCASE CRESULT:1
+					CASE 1 TO 部隊数
+						部隊編成 = CRESULT:1
+						;CALL 部隊編成, CRESULT:1
+				ENDSELECT
+			ENDIF
 		CASE "人員の補充"
-			SELECTCASE CRESULT:1
-				CASE 10 TO 14
-					ステータス:(加入候補:(CRESULT:1-10)):未加入 = 0
-					加入済み:(CRESULT:1-10) = 1
-			ENDSELECT
+			IF 雇用キャラ
+				IF CRESULT:1 == 0
+					ステータス:雇用キャラ:未加入 = 0
+					;加入済み:(CRESULT:1-10) = 1
+					SORTCHARA ステータス:未加入
+				ELSE
+					雇用キャラ = 0
+				ENDIF
+			ELSE
+				雇用キャラ = CRESULT:1
+			ENDIF
 		CASE "アイテム"
 			SELECTCASE CRESULT:1
 				CASE 0 TO 99
@@ -57,43 +85,97 @@ CALL COLUMNPRINTL, 0, "[1] - 1です"
 
 @メインメニュー_部隊編成
 #DIM DYNAMIC LCOUNT
+#DIM DYNAMIC LCOUNT2
+#DIM DYNAMIC 対象
+#DIM DYNAMIC ID
+#DIM ページ
+#DIM DYNAMIC 表示数
+#DIM DYNAMIC 次キャラあり
+ID = 部隊編成
 
-FOR LCOUNT, 1, 11
-	CALL COLUMNPRINTL, 0, @"[{LCOUNT}] 部隊{LCOUNT}"
-NEXT
+IF 部隊編成
+	;FOR LCOUNT, 0, CHARANUM
+	;	SIF ステータス:所属部隊 == ID
+	;		ARRAYSHIFT 隊員, 1, LCOUNT
+	;NEXT
+	IF 部隊スロット != -1
+		CALL COLUMNPRINTL, 0, @"□部隊{ID}に誰を配属しますか？"
+		表示数 = 0
+		次キャラあり = 0
+		FOR LCOUNT, 0, CHARANUM
+			SIF ページ*5 > LCOUNT
+				CONTINUE
+			SIF ステータス:LCOUNT:所属部隊
+				CONTINUE
+			SIF ステータス:LCOUNT:VP == 0
+				CONTINUE
+			SIF ステータス:LCOUNT:未加入
+				CONTINUE
+			IF 表示数 >= 5
+				次キャラあり = 1
+				BREAK
+			ENDIF
+			CALL ステータス表示, LCOUNT, @"[{LCOUNT}]"
+			CALL COLUMNPRINTL, 0, ""
+			表示数++
+		NEXT
+		FOR LCOUNT, 0, 5-表示数
+			CALL COLUMNPRINTL, 0, ""
+			CALL COLUMNPRINTL, 0, ""
+			CALL COLUMNPRINTL, 0, ""
+			CALL COLUMNPRINTL, 0, ""
+		NEXT
+		CALL COLUMNPRINTL, 0, @"%RETURNSPACE(ページ, "[-1] 前ページ")% [0] 戻る %RETURNSPACE(次キャラあり, "[-9] 次ページ")%"
+	ELSE
+		CALL COLUMNPRINTL, 0, @"□部隊{ID}の編成"
+		FOR LCOUNT, 0, 3
+			IF !部隊メンバー:ID:LCOUNT
+				CALL COLUMNPRINTL, 0, @"空き [{LCOUNT}] - 配属"
+				CONTINUE
+			ENDIF
+			対象 = 部隊メンバー:ID:LCOUNT
+
+			CALL ステータス表示, 対象, @"[{LCOUNT}] - 変更する"
+			CALL COLUMNPRINTL, 0, ""
+		NEXT
+		CALL COLUMNPRINTL, 0, "[10] 戻る"
+	ENDIF
+ELSE
+	CALL COLUMNPRINTL, 0, @"□部隊編成 \@ 部隊数 < 10 ? [0] 部隊数を増やす(資源{部隊数*100}個必要) #\@"
+	FOR LCOUNT, 1, 部隊数+1
+		CALL COLUMNPRINTL, 0, @"[{LCOUNT}] 部隊{LCOUNT}"
+	NEXT
+ENDIF
 
 @メインメニュー_人員の補充
 #DIM DYNAMIC LCOUNT
 #DIM DYNAMIC LCOUNT2
 #DIM DYNAMIC 対象
 #DIM DYNAMIC LINE
+#DIMS 雇用キャラ名
 
 CALL COLUMNPRINTL ,0, @"□所持資源:{資源}個"
-FOR LCOUNT, 0, 5
-	SIF 加入済み:LCOUNT
+FOR LCOUNT, 0, CHARANUM
+	SIF !ステータス:LCOUNT:未加入
 		CONTINUE
-	対象 = 加入候補:LCOUNT
-	CALL COLUMNPRINT, 0, @"名前:%NAME:対象% レベル:{ステータス:対象:レベル} 職業:%CSTR:対象:職業% "
-	CALL COLUMNPRINT, 0, @"HP:{ステータス:対象:HP}/{MAXHP(対象)} ", "lime"
-	CALL COLUMNPRINT, 0, @"MP:{ステータス:対象:MP}/{MAXMP(対象)} ", "deepskyblue"
-	CALL COLUMNPRINT, 0, @"VP:{ステータス:対象:VP}/{MAXVP(対象)} ", "yellow"
-	CALL COLUMNPRINTL, 0, @"[{LCOUNT}] - 雇う\@ ステータス:対象:レベル > 1 ? (資源{ステータス:対象:レベル}個必要）#\@"
-	FOR LCOUNT2, 0, 6, 2
-		CALL COLUMNPRINTL, 0, @"%ERDNAME(ステータス, LCOUNT2)%%"■"*ステータス:対象:LCOUNT2%%"□"*(20-ステータス:対象:LCOUNT2)% {ステータス:対象:LCOUNT2} %ERDNAME(ステータス, (LCOUNT2+1))%%"■"*ステータス:対象:(LCOUNT2+1)%%"□"*(20-ステータス:対象:(LCOUNT2+1))% {ステータス:対象:(LCOUNT2+1)}"
-	NEXT
+	対象 = LCOUNT
+	CALL ステータス表示, 対象, @"[{LCOUNT}] - 雇う\@ ステータス:対象:レベル > 1 ? (資源{ステータス:対象:レベル}個必要）#\@"
 	CALL COLUMNPRINTL, 0, ""
 NEXT
-SELECTCASE CRESULT:1
-	CASE 0 TO 4
-		CALL COLUMNPRINTL, 0, @"%NAME:(加入候補:(CRESULT:1))%を雇いますか？"
-		CALL COLUMNPRINTL, 0, @"[{CRESULT:1+10}] はい [20] いいえ"
-	CASE 10 TO 14
-		IF ステータス:対象:レベル > 1 && 資源 < ステータス:対象:レベル
-			CALL COLUMNPRINTL, 0, "資源が足りません"
-			RETURN
+IF 雇用キャラ
+	IF CRESULT:1 == 0
+		CALL COLUMNPRINTL, 0, @"%雇用キャラ名%を雇った"
+		雇用キャラ = 0
+	ELSE
+		IF ステータス:雇用キャラ:レベル > 1 && 資源 < ステータス:雇用キャラ:レベル
+			CALL COLUMNPRINTL, 0, @"%NAME:雇用キャラ%を雇うには資源が足りません"
+		ELSE
+			CALL COLUMNPRINTL, 0, @"%NAME:雇用キャラ%を雇いますか？"
+			雇用キャラ名 = %NAME:雇用キャラ%
+			CALL COLUMNPRINTL, 0, @"[0] はい [1] いいえ"
 		ENDIF
-		CALL COLUMNPRINTL, 0, @"%NAME:(加入候補:(CRESULT:1-10))%を雇った"
-ENDSELECT
+	ENDIF
+ENDIF
 
 @メインメニュー_アイテム
 #DIM DYNAMIC LINE

@@ -403,3 +403,17 @@ RETURNF DT_CELL_GETS("アイテム", ITEMID, "説明")
 #DIM DYNAMIC ITEMID
 
 DT_ROW_REMOVE "アイテム", DT_CELL_GET("アイテム", ITEMID, "id")
+
+@ステータス表示, 対象, ボタン
+#DIM DYNAMIC 対象
+#DIM DYNAMIC LCOUNT
+#DIMS DYNAMIC ボタン
+
+CALL COLUMNPRINT, 0, @"名前:%NAME:対象% レベル:{ステータス:対象:レベル} 職業:%CSTR:対象:職業% "
+CALL COLUMNPRINT, 0, @"HP:{ステータス:対象:HP}/{MAXHP(対象)} ", "lime"
+CALL COLUMNPRINT, 0, @"MP:{ステータス:対象:MP}/{MAXMP(対象)} ", "deepskyblue"
+CALL COLUMNPRINT, 0, @"VP:{ステータス:対象:VP}/{MAXVP(対象)} ", "yellow"
+CALL COLUMNPRINTL, 0, ボタン
+FOR LCOUNT, 0, 6, 2
+	CALL COLUMNPRINTL, 0, @"%ERDNAME(ステータス, LCOUNT)%%"■"*ステータス:対象:LCOUNT%%"□"*(20-ステータス:対象:LCOUNT)% {ステータス:対象:LCOUNT} %ERDNAME(ステータス, (LCOUNT+1))%%"■"*ステータス:対象:(LCOUNT+1)%%"□"*(20-ステータス:対象:(LCOUNT+1))% {ステータス:対象:(LCOUNT+1)}"
+NEXT
