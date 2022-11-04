@@ -277,7 +277,12 @@ FOR LCOUNT, 0, 5
 	ENDSELECT
 	CSTR:対象:職業 = %職業一覧:(RAND:VARSIZE("職業一覧"))%
 	CALL 職業初期値, CSTR:対象:職業, 対象
-	FOR LCOUNT2, 1, ステータス:対象:レベル 
+	IF 職業顔グラ(CSTR:対象:職業) != ""
+		CSTR:対象:顔グラ = %RESULTS:(RAND:ENUMFILES(@"resources/%職業顔グラ(CSTR:対象:職業)%"))%
+		;文頭の「resources\」の11文字を消す
+		CSTR:対象:顔グラ = %SUBSTRING(CSTR:対象:顔グラ, 10)%
+	ENDIF
+	FOR LCOUNT2, 1, ステータス:対象:レベル
 		ステータス:対象:(RAND:6)++
 	NEXT
 	ステータス:対象:HP = MAXHP(対象)

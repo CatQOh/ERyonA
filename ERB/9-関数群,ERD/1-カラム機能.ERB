@@ -357,8 +357,9 @@ CALL COLUMNWAIT
 [SKIPEND]
 
 @COLUMNIMG, ARG, ARGS, ARG:1, ARG:2
-DEBUGPRINTFORML {COLUMN:ARG:LINE}
-COLUMNLOG:ARG:(COLUMN:ARG:LINE) += @"<img src='%ARGS%' srcb='' width='{ARG:1}' height='{ARG:2}'>"
+;DEBUGPRINTFORML {COLUMN:ARG:LINE}
+CALL GCREATESTACK, ARGS
+COLUMNLOG:ARG:(COLUMN:ARG:LINE) += @"<img src='%ESCAPE(ARGS)%' srcb='' width='{ARG:1}' height='{ARG:2}'>"
 
 
 @COLUMNSHIFT, ARG, ARGS, ETC
@@ -447,7 +448,7 @@ FOR LCOUNT, 0, 10
 						ボタン:LCOUNT3 = TOINT(文字列ボタン:LCOUNT3)
 				ENDIF
 				開始位置 = STRFINDU(本文:LCOUNT3, "[", 括弧:1)
-				DEBUGPRINTFORML 開始位置 {開始位置}
+				;DEBUGPRINTFORML 開始位置 {開始位置}
 				IF 開始位置 > 0
 					本文:(LCOUNT3+1) = %SUBSTRINGU(本文:LCOUNT3, 開始位置, -1)%
 					本文:LCOUNT3 = %SUBSTRINGU(本文:LCOUNT3, 括弧, 開始位置-括弧)%
@@ -456,7 +457,7 @@ FOR LCOUNT, 0, 10
 				ENDIF
 			NEXT
 			FOR LCOUNT3, 0, 10
-				DEBUGPRINTFORML %本文:LCOUNT3% {ボタン:LCOUNT3}
+				;DEBUGPRINTFORML %本文:LCOUNT3% {ボタン:LCOUNT3}
 				IF ボタン:LCOUNT3 != -3189415
 					HTML += @"<button value ='{ボタン:LCOUNT3}'>%本文:LCOUNT3%</button>"
 				ELSEIF 文字列ボタン:LCOUNT3 != ""

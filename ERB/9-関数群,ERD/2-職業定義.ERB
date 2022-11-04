@@ -115,3 +115,25 @@ SELECTCASE 職業
 		ステータス:対象:感覚 = 2
 		ステータス:対象:運勢 = 2
 ENDSELECT
+
+@職業顔グラ, ARGS
+#FUNCTIONS
+
+SELECTCASE ARGS
+	CASE "ロイヤルガード", "グラディエーター", "テンプルナイト", "ホーリーナイト"
+		RETURNF "FIGHTER"
+	CASE "バトルメイジ", "ソーサラー"
+		RETURNF "MAGE"
+	CASE "ヒーラー", "メディック", "プロフェット"
+		RETURNF "PRIEST"
+	CASE "アサシン"
+		RETURNF "ASSASSIN"
+	CASE "ハンター", "ガンスミス"
+		RETURNF "HUNTER"
+	CASE "サムライ"
+		RETURNF "SAMURAI"
+	CASE "エクソシスト", "スターゲイザー"
+		RETURNF "EXORCIST"
+	CASE "シャーマン"
+		RETURNF "SHAMAN"
+ENDSELECT
