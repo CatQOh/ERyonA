@@ -28,13 +28,17 @@
 #DIM SAVEDATA 倉庫
 #DIM SAVEDATA 部隊数
 #DIM SAVEDATA 資源
-#DIM SAVEDATA 部隊メンバー, 10, 3
+#DIM SAVEDATA 部隊メンバー, 11, 3
+#DIM SAVEDATA 部隊目標, 11
 #DIMS 売却アイテム名
 #DIM 売却額
 #DIM 選択アイテム
 #DIM 部隊編成
 #DIM 部隊スロット = -1
 #DIM 雇用キャラ
+#DIM 選択ダンジョン = -1
+;#DIM キャラ詳細表示
+;#DIM ページ
 ;#DIM SAVEDATA 武器, 200, 10
 ;#DIM SAVEDATA 頭装備, 100, 10
 ;#DIM SAVEDATA 防具, 100, 10
@@ -42,3 +46,5 @@
 ;#DIM SAVEDATA アクセサリ, 200, 10
 
 #DIM GCOUNT
+
+;#DIM SAVEDATA ダンジョン, 10, 10

@@ -434,6 +434,7 @@ FOR LCOUNT, 0, 10
 	FOR LCOUNT2, 0, COLUMN:LCOUNT:9
 		SIF MAX_LINE <= LCOUNT2
 			BREAK
+		VARSET 本文
 		;IF COLUMNLOG:LCOUNT:LCOUNT2 != ""
 			本文:0 = %COLUMNLOG:LCOUNT:LCOUNT2%
 			開始位置 = 0
@@ -495,9 +496,9 @@ FOR LCOUNT, 0, 10
 	SPRITECREATE @"COLUMN_{LCOUNT}", LCOUNT
 	HTML += @"<nonbutton pos='{COLUMN:LCOUNT:3}'><img src='COLUMN_{LCOUNT}' height='{COLUMN:LCOUNT:2}' ypos='-{COLUMN:LCOUNT:4}'></nonbutton>"
 	[SKIPEND]
+	HTML += "</div></nobr>"
 NEXT
 
-HTML += "</div></nobr>"
 
 HTML_PRINT HTML
 

@@ -3,11 +3,30 @@
 SIF 加入候補 == -1
 	CALL 加入候補生成
 
+CALL ダンジョン生成
+
 DO
-	CALL カラム生成, "メインメニュー", "ダンジョン探索", "部隊編成", "人員の補充", "アイテム", "セーブ＆ロード"
+	CALL カラム生成, "メインメニュー", "ダンジョン探索", "部隊編成", "キャラ一覧", "人員の補充", "アイテム", "セーブ＆ロード"
 	NOWCOLUMN = CRESULT:0
 	SELECTCASE カラム名:(CRESULT:0)
 		CASE "ダンジョン探索"
+			IF 選択ダンジョン >= 0
+				IF INRANGE(CRESULT:1, 1, 10)
+					DT_CELL_SET "ダンジョン", 選択ダンジョン, "探索部隊", CRESULT:1
+					部隊目標:(CRESULT:1) = 選択ダンジョン
+				ENDIF
+				選択ダンジョン = -1
+			ELSE
+				IF INRANGE(CRESULT:1, 0, 9)
+					選択ダンジョン = CRESULT:1
+					IF ダンジョン探索部隊(選択ダンジョン) >= 0
+						部隊目標:ダンジョン探索部隊(選択ダンジョン) = -1
+						DT_CELL_SET "ダンジョン", 選択ダンジョン, "探索部隊", -1
+						CRESULT:1 = -1
+						選択ダンジョン = -1
+					ENDIF
+				ENDIF
+			ENDIF
 		CASE "部隊編成"
 			IF 部隊編成
 				IF 部隊スロット != -1
@@ -79,8 +98,30 @@ DO
 LOOP 1
 
 @メインメニュー_ダンジョン探索
-CALL COLUMNPRINTL, 0, "[0] - ダンジョン探索です"
-CALL COLUMNPRINTL, 0, "[1] - 1です"
+#DIM DYNAMIC LCOUNT
+
+IF 選択ダンジョン != -1
+	CALL COLUMNPRINTL, 0, "□探索する部隊を選んでください"
+	FOR LCOUNT, 1, 部隊数+1
+		SIF 部隊人数(LCOUNT) && 部隊目標:LCOUNT == -1
+			CALL COLUMNPRINTL, 0, @"　[{LCOUNT}] 部隊{LCOUNT}"
+	NEXT
+	CALL COLUMNPRINTL, 0, "　[-1] 戻る"
+ELSE
+	CALL COLUMNPRINTL, 0, @"□{DAY}日目 探索するダンジョンを選択してください"
+
+	FOR LCOUNT, 0, 10
+		CALL COLUMNPRINT, 0, @"　[{LCOUNT}]%ダンジョン名(LCOUNT)% レベル:{ダンジョンレベル(LCOUNT)} "
+		IF ダンジョン探索部隊(LCOUNT) != -1
+			IF 部隊人数(ダンジョン探索部隊(LCOUNT)) == 0
+				DT_CELL_SET "ダンジョン", LCOUNT, "ダンジョン探索部隊", -1
+			ELSE
+				CALL COLUMNPRINT, 0, @"部隊{ダンジョン探索部隊(LCOUNT)}が探索予定 再選択で中止"
+			ENDIF
+		ENDIF
+		CALL COLUMNPRINTL, 0, ""
+	NEXT
+ENDIF
 
 
 @メインメニュー_部隊編成
@@ -90,8 +131,17 @@ CALL COLUMNPRINTL, 0, "[1] - 1です"
 #DIM DYNAMIC ID
 #DIM ページ
 #DIM DYNAMIC 表示数
-#DIM DYNAMIC 次キャラあり
+#DIM 次キャラあり
 ID = 部隊編成
+
+SELECTCASE CRESULT:1
+	CASE -1
+		SIF ページ > 0
+			ページ--
+	CASE -9
+		SIF 次キャラあり
+			ページ++
+ENDSELECT
 
 IF 部隊編成
 	;FOR LCOUNT, 0, CHARANUM
@@ -130,7 +180,7 @@ IF 部隊編成
 		CALL COLUMNPRINTL, 0, @"□部隊{ID}の編成"
 		FOR LCOUNT, 0, 3
 			IF !部隊メンバー:ID:LCOUNT
-				CALL COLUMNPRINTL, 0, @"空き [{LCOUNT}] - 配属"
+				CALL COLUMNPRINTL, 0, @"　空き [{LCOUNT}] - 配属"
 				CONTINUE
 			ENDIF
 			対象 = 部隊メンバー:ID:LCOUNT
@@ -138,14 +188,80 @@ IF 部隊編成
 			CALL ステータス表示, 対象, @"[{LCOUNT}] - 変更する"
 			CALL COLUMNPRINTL, 0, ""
 		NEXT
-		CALL COLUMNPRINTL, 0, "[10] 戻る"
+		CALL COLUMNPRINTL, 0, "　[10] 戻る"
 	ENDIF
 ELSE
 	CALL COLUMNPRINTL, 0, @"□部隊編成 \@ 部隊数 < 10 ? [0] 部隊数を増やす(資源{部隊数*100}個必要) #\@"
 	FOR LCOUNT, 1, 部隊数+1
-		CALL COLUMNPRINTL, 0, @"[{LCOUNT}] 部隊{LCOUNT}"
+		CALL COLUMNPRINTL, 0, @"　[{LCOUNT}] 部隊{LCOUNT}"
 	NEXT
 ENDIF
+
+@メインメニュー_キャラ一覧
+#DIM DYNAMIC LCOUNT
+#DIM DYNAMIC 表示数
+#DIM ページ
+#DIM キャラ詳細表示
+#DIM 次キャラあり
+
+IF キャラ詳細表示
+	SELECTCASE CRESULT:1
+		CASE -1
+			SIF キャラ詳細表示 > 1
+				キャラ詳細表示--
+		CASE -9
+			SIF キャラ詳細表示 < CHARANUM-1
+				キャラ詳細表示++
+		CASE 0
+			キャラ詳細表示 = 0
+	ENDSELECT
+ELSE
+	SELECTCASE CRESULT:1
+		CASE -1
+			SIF ページ > 0
+				ページ--
+		CASE -9
+			SIF 次キャラあり
+				ページ++
+		CASEELSE
+			IF INRANGE(CRESULT:1, 1, CHARANUM-1)
+				SIF !ステータス:(CRESULT:1):未加入
+					キャラ詳細表示 = CRESULT:1
+			ENDIF
+	ENDSELECT
+ENDIF
+
+IF キャラ詳細表示
+	CALL COLUMNPRINTL, 0, "キャラ表示"
+	CALL COLUMNPRINTL, 0, "[0] - 戻る"
+ELSE
+	CALL COLUMNPRINTL, 0, @"□キャラ一覧 生存者数/総数:{生存者数()}/{キャラ総数()}"
+	表示数 = 0
+	次キャラあり = 0
+	FOR LCOUNT, 0, CHARANUM
+		SIF LCOUNT == 0
+			CONTINUE
+		SIF ページ*5 > LCOUNT
+			CONTINUE
+		SIF ステータス:LCOUNT:未加入
+			CONTINUE
+		IF 表示数 >= 5
+			次キャラあり = 1
+			BREAK
+		ENDIF
+		CALL ステータス表示, LCOUNT, @"[{LCOUNT}] - 詳細"
+		CALL COLUMNPRINTL, 0, ""
+		表示数++
+	NEXT
+	FOR LCOUNT, 0, 5-表示数
+		CALL COLUMNPRINTL, 0, ""
+		CALL COLUMNPRINTL, 0, ""
+		CALL COLUMNPRINTL, 0, ""
+		CALL COLUMNPRINTL, 0, ""
+	NEXT
+	CALL COLUMNPRINTL, 0, @"%RETURNSPACE(ページ, "[-1] 前ページ")% %RETURNSPACE(次キャラあり, "[-9] 次ページ")%"
+ENDIF
+
 
 @メインメニュー_人員の補充
 #DIM DYNAMIC LCOUNT
@@ -154,7 +270,7 @@ ENDIF
 #DIM DYNAMIC LINE
 #DIMS 雇用キャラ名
 
-CALL COLUMNPRINTL ,0, @"□所持資源:{資源}個"
+CALL COLUMNPRINTL , 0, @"□所持資源:{資源}個"
 FOR LCOUNT, 0, CHARANUM
 	SIF !ステータス:LCOUNT:未加入
 		CONTINUE
@@ -261,7 +377,9 @@ SIF CRESULT:1 == 10
 #DIM DYNAMIC LCOUNT
 #DIM DYNAMIC LCOUNT2
 #DIM DYNAMIC 対象
-
+#DIM DYNAMIC 乱数
+DUMPRAND
+乱数 = RANDDATA
 RANDOMIZE シード値:キャラクター
 FOR LCOUNT, 0, 5
 	ADDVOIDCHARA
@@ -291,3 +409,7 @@ FOR LCOUNT, 0, 5
 	;ステータスの設定 保留
 	ステータス:対象:未加入 = 1
 NEXT
+
+DUMPRAND
+シード値:キャラクター = RANDDATA
+RANDOMIZE 乱数
