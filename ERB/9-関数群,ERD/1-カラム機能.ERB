@@ -1,4 +1,14 @@
-﻿@カラム生成, カラム, カラムメニュー:0, カラムメニュー:1, カラムメニュー:2, カラムメニュー:3, カラムメニュー:4, カラムメニュー:5, カラムメニュー:6, カラムメニュー:7, カラムメニュー:8, カラムメニュー:9
+﻿;;;ラッパー関数
+@カラム生成, カラム, カラムメニュー:0, カラムメニュー:1, カラムメニュー:2, カラムメニュー:3, カラムメニュー:4, カラムメニュー:5, カラムメニュー:6, カラムメニュー:7, カラムメニュー:8, カラムメニュー:9
+#DIMS カラム
+#DIMS DYNAMIC カラムメニュー, 10
+DO
+	CALL カラム生成2, カラム, カラムメニュー:0, カラムメニュー:1, カラムメニュー:2, カラムメニュー:3, カラムメニュー:4, カラムメニュー:5, カラムメニュー:6, カラムメニュー:7, カラムメニュー:8, カラムメニュー:9
+	SIF LOOP_BREAK
+		BREAK
+LOOP 1
+
+@カラム生成2, カラム, カラムメニュー:0, カラムメニュー:1, カラムメニュー:2, カラムメニュー:3, カラムメニュー:4, カラムメニュー:5, カラムメニュー:6, カラムメニュー:7, カラムメニュー:8, カラムメニュー:9
 #DIM DYNAMIC LCOUNT
 #DIM DYNAMIC LINE
 ;MAX_LINEは可変にしてみる
@@ -13,6 +23,8 @@
 #DIMS カラム
 REDRAW 0
 CALL LOOP_CLEARLINE
+
+LOOP_BREAK = 0
 
 ARRAYCOPY "カラムメニュー", "カラム名"
 
@@ -294,6 +306,7 @@ SELECTCASE RESULT
 	CASEELSE
 		CRESULT:0 = 選択カラム
 		CRESULT:1 = RESULT
+		TRYCALLFORM %カラム%_%カラムメニュー:選択カラム%_INPUT
 		REDRAW 1
 		RETURN
 ENDSELECT
@@ -452,7 +465,11 @@ FOR LCOUNT, 0, 10
 				;DEBUGPRINTFORML 開始位置 {開始位置}
 				IF 開始位置 > 0
 					本文:(LCOUNT3+1) = %SUBSTRINGU(本文:LCOUNT3, 開始位置, -1)%
+				IF LCOUNT3 == 0
+					本文:LCOUNT3 = %SUBSTRINGU(本文:LCOUNT3, 0, 開始位置)%
+				ELSE
 					本文:LCOUNT3 = %SUBSTRINGU(本文:LCOUNT3, 括弧, 開始位置-括弧)%
+				ENDIF
 				ELSE
 					BREAK
 				ENDIF

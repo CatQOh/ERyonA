@@ -7,6 +7,7 @@
 
 #DIMS カラム行, 100
 #DIMS カラム名, 10
+#DIM LOOP_BREAK
 
 #DIM COLUMN, 10, 10
 #DIMS COLUMNLOG, 10, 100
@@ -18,8 +19,9 @@
 
 #DIM SAVEDATA SAVEID
 
-#DIM SAVEDATA 加入候補, 5
-#DIM SAVEDATA 加入済み, 5
+#DIM SAVEDATA 加入候補生成済み
+;#DIM SAVEDATA 加入候補, 5
+;#DIM SAVEDATA 加入済み, 5
 
 #DIMS 職業一覧, 20
 
@@ -37,6 +39,8 @@
 #DIM 部隊スロット = -1
 #DIM 雇用キャラ
 #DIM 選択ダンジョン = -1
+
+#DIM 出撃部隊無し
 ;#DIM キャラ詳細表示
 ;#DIM ページ
 ;#DIM SAVEDATA 武器, 200, 10
@@ -48,3 +52,10 @@
 #DIM GCOUNT
 
 ;#DIM SAVEDATA ダンジョン, 10, 10
+
+#DIM 敵ステータス, 10, 5, 20
+#DIM 敵状態異常, 10, 5, 30
+#DIMS 敵名, 10, 5
+
+#DIM 戦闘中, 10
+#DIM 進行度, 10

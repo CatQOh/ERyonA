@@ -1,0 +1,70 @@
+﻿@ダンジョン探索
+#DIM DYNAMIC LCOUNT
+#DIMS DYNAMIC DCOLUMN, 10
+
+FOR LCOUNT, 1, 11
+	SIF 部隊目標:LCOUNT >= 0
+		DCOLUMN:LCOUNT = ダンジョン{部隊目標:LCOUNT}
+NEXT
+
+CALL カラム生成, "ダンジョン探索", DCOLUMN:0, DCOLUMN:1, DCOLUMN:2, DCOLUMN:3, DCOLUMN:4, DCOLUMN:5, DCOLUMN:6, DCOLUMN:7, DCOLUMN:8, DCOLUMN:9
+
+@ダンジョン探索_ダンジョン0
+CALL ダンジョン画面, 0
+
+@ダンジョン探索_ダンジョン0_INPUT
+CALL ダンジョン画面_INPUT, 0
+
+@ダンジョン探索_ダンジョン1
+CALL ダンジョン画面, 1
+
+@ダンジョン探索_ダンジョン1_INPUT
+CALL ダンジョン画面_INPUT, 1
+
+@ダンジョン探索_ダンジョン2
+CALL ダンジョン画面, 2
+
+@ダンジョン探索_ダンジョン2_INPUT
+CALL ダンジョン画面_INPUT, 2
+
+@ダンジョン探索_ダンジョン3
+CALL ダンジョン画面, 3
+
+@ダンジョン探索_ダンジョン3_INPUT
+CALL ダンジョン画面_INPUT, 3
+
+@ダンジョン探索_ダンジョン4
+CALL ダンジョン画面, 4
+
+@ダンジョン探索_ダンジョン4_INPUT
+CALL ダンジョン画面_INPUT, 4
+
+@ダンジョン探索_ダンジョン5
+CALL ダンジョン画面, 5
+
+@ダンジョン探索_ダンジョン5_INPUT
+CALL ダンジョン画面_INPUT, 5
+
+@ダンジョン探索_ダンジョン6
+CALL ダンジョン画面, 6
+
+@ダンジョン探索_ダンジョン6_INPUT
+CALL ダンジョン画面_INPUT, 6
+
+@ダンジョン探索_ダンジョン7
+CALL ダンジョン画面, 7
+
+@ダンジョン探索_ダンジョン7_INPUT
+CALL ダンジョン画面_INPUT, 7
+
+@ダンジョン探索_ダンジョン8
+CALL ダンジョン画面, 8
+
+@ダンジョン探索_ダンジョン8_INPUT
+CALL ダンジョン画面_INPUT, 8
+
+@ダンジョン探索_ダンジョン9
+CALL ダンジョン画面, 9
+
+@ダンジョン探索_ダンジョン9_INPUT
+CALL ダンジョン画面_INPUT, 9

@@ -8,11 +8,10 @@
 
 SAVEID = セーブデータID
 
-VARSET 加入候補, -1
-
 CALL アイテムDT作成
-CALL アイテム一覧
 CALL ダンジョンDT作成
+
+CALL データ定義
 
 ;初期装備をいくつか追加する
 CALL アイテム追加, "ショートソード"
@@ -41,3 +40,7 @@ MAX_LINE = 30
 PRINTFORMW ここに経緯を書く予定
 
 JUMP メインメニュー
+
+@データ定義
+CALL アイテム一覧
+CALL 職業定義

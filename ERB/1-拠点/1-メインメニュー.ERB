@@ -1,101 +1,14 @@
 ﻿@メインメニュー
 #DIM NOWCOLUMN
-SIF 加入候補 == -1
+#DIM DYNAMIC LCOUNT
+SIF !加入候補生成済み
 	CALL 加入候補生成
 
 CALL ダンジョン生成
 
-DO
-	CALL カラム生成, "メインメニュー", "ダンジョン探索", "部隊編成", "キャラ一覧", "人員の補充", "アイテム", "セーブ＆ロード"
-	NOWCOLUMN = CRESULT:0
-	SELECTCASE カラム名:(CRESULT:0)
-		CASE "ダンジョン探索"
-			IF 選択ダンジョン >= 0
-				IF INRANGE(CRESULT:1, 1, 10)
-					DT_CELL_SET "ダンジョン", 選択ダンジョン, "探索部隊", CRESULT:1
-					部隊目標:(CRESULT:1) = 選択ダンジョン
-				ENDIF
-				選択ダンジョン = -1
-			ELSE
-				IF INRANGE(CRESULT:1, 0, 9)
-					選択ダンジョン = CRESULT:1
-					IF ダンジョン探索部隊(選択ダンジョン) >= 0
-						部隊目標:ダンジョン探索部隊(選択ダンジョン) = -1
-						DT_CELL_SET "ダンジョン", 選択ダンジョン, "探索部隊", -1
-						CRESULT:1 = -1
-						選択ダンジョン = -1
-					ENDIF
-				ENDIF
-			ENDIF
-		CASE "部隊編成"
-			IF 部隊編成
-				IF 部隊スロット != -1
-					IF CRESULT:1 == 0
-						部隊スロット = -1
-					ELSE
-						SIF 部隊メンバー:部隊編成:部隊スロット
-							ステータス:(部隊メンバー:部隊編成:部隊スロット):所属部隊 = 0
-						部隊メンバー:部隊編成:部隊スロット = CRESULT:1
-						ステータス:(CRESULT:1):所属部隊 = 部隊編成
-						CRESULT:1 = 0
-						部隊スロット = -1
-					ENDIF
-				ELSE
-					IF CRESULT:1 == 10
-						部隊編成 = 0
-					ELSE
-						部隊スロット = CRESULT:1
-					ENDIF
-				ENDIF
-			ELSE
-				SELECTCASE CRESULT:1
-					CASE 1 TO 部隊数
-						部隊編成 = CRESULT:1
-						;CALL 部隊編成, CRESULT:1
-				ENDSELECT
-			ENDIF
-		CASE "人員の補充"
-			IF 雇用キャラ
-				IF CRESULT:1 == 0
-					ステータス:雇用キャラ:未加入 = 0
-					;加入済み:(CRESULT:1-10) = 1
-					SORTCHARA ステータス:未加入
-				ELSE
-					雇用キャラ = 0
-				ENDIF
-			ELSE
-				雇用キャラ = CRESULT:1
-			ENDIF
-		CASE "アイテム"
-			SELECTCASE CRESULT:1
-				CASE 0 TO 99
-					選択アイテム = CRESULT:1
-				CASE 201
-					SIF アイテムページ > 0
-						アイテムページ--
-				CASE 209
-					SIF アイテムページ < 9
-						アイテムページ++
-				CASE 210
-					IF レア度(選択アイテム)
-						売却アイテム名 = %アイテム名(選択アイテム)%
-						売却額 = レア度(選択アイテム)
-						資源 += 売却額
-						CALL アイテム削除(選択アイテム)
-					ENDIF
-			ENDSELECT
-		CASE "セーブ＆ロード"
-			SELECTCASE CRESULT:1
-				CASE 0 TO 9
-					IF CHKDATA(CRESULT:1) == 0
-						LOADDATA CRESULT:1
-					ENDIF
-				CASE 10
-					SAVEDATA SAVEID, @"{SAVEID}"
-			ENDSELECT
-	ENDSELECT
-	CRESULT:0 = NOWCOLUMN
-LOOP 1
+CALL カラム生成, "メインメニュー", "ダンジョン探索", "部隊編成", "キャラ一覧", "人員の補充", "アイテム", "セーブ＆ロード"
+
+RESTART
 
 @メインメニュー_ダンジョン探索
 #DIM DYNAMIC LCOUNT
@@ -121,6 +34,54 @@ ELSE
 		ENDIF
 		CALL COLUMNPRINTL, 0, ""
 	NEXT
+	CALL COLUMNPRINTL, 0, ""
+	IF 出撃部隊無し
+		CALL COLUMNPRINTL, 0, "　出撃する部隊が居ません。本当に1日を終了してよろしいですか？"
+		CALL COLUMNPRINTL, 0, "　[21] はい [22] いいえ"
+	ELSE
+		CALL COLUMNPRINTL, 0, "　[20] この編成で探索する(1日を終了する)"
+	ENDIF
+ENDIF
+
+@メインメニュー_ダンジョン探索_INPUT
+#DIM DYNAMIC LCOUNT
+
+IF 選択ダンジョン >= 0
+	IF INRANGE(CRESULT:1, 1, 10)
+		DT_CELL_SET "ダンジョン", 選択ダンジョン, "探索部隊", CRESULT:1
+		部隊目標:(CRESULT:1) = 選択ダンジョン
+	ENDIF
+	選択ダンジョン = -1
+ELSE
+	SELECTCASE CRESULT:1
+		CASE 0 TO 9
+			選択ダンジョン = CRESULT:1
+			IF ダンジョン探索部隊(選択ダンジョン) >= 0
+				部隊目標:ダンジョン探索部隊(選択ダンジョン) = -1
+				DT_CELL_SET "ダンジョン", 選択ダンジョン, "探索部隊", -1
+				CRESULT:1 = -1
+				選択ダンジョン = -1
+			ENDIF
+		CASE 20
+			FOR LCOUNT, 1, 11
+				SIF 部隊目標:LCOUNT != -1
+					BREAK
+				SIF LCOUNT == 10
+					出撃部隊無し = 1
+			NEXT
+			IF !出撃部隊無し
+				CALL ダンジョン探索
+				CALL 日付変更
+			ENDIF
+		CASE 21
+			IF 出撃部隊無し
+				CALL 日付変更
+				出撃部隊無し = 0
+			ENDIF
+		CASE 22
+			出撃部隊無し = 0
+			CRESULT:1 = -1
+	ENDSELECT
 ENDIF
 
 
@@ -197,6 +158,36 @@ ELSE
 	NEXT
 ENDIF
 
+@メインメニュー_部隊編成_INPUT
+#DIM DYNAMIC LCOUNT
+
+IF 部隊編成
+	IF 部隊スロット != -1
+		IF CRESULT:1 == 0
+			部隊スロット = -1
+		ELSE
+			SIF 部隊メンバー:部隊編成:部隊スロット
+				ステータス:(部隊メンバー:部隊編成:部隊スロット):所属部隊 = 0
+			部隊メンバー:部隊編成:部隊スロット = CRESULT:1
+			ステータス:(CRESULT:1):所属部隊 = 部隊編成
+			CRESULT:1 = 0
+			部隊スロット = -1
+		ENDIF
+	ELSE
+		IF CRESULT:1 == 10
+			部隊編成 = 0
+		ELSE
+			部隊スロット = CRESULT:1
+		ENDIF
+	ENDIF
+ELSE
+	SELECTCASE CRESULT:1
+		CASE 1 TO 部隊数
+			部隊編成 = CRESULT:1
+			;CALL 部隊編成, CRESULT:1
+	ENDSELECT
+ENDIF
+
 @メインメニュー_キャラ一覧
 #DIM DYNAMIC LCOUNT
 #DIM DYNAMIC 表示数
@@ -262,6 +253,8 @@ ELSE
 	CALL COLUMNPRINTL, 0, @"%RETURNSPACE(ページ, "[-1] 前ページ")% %RETURNSPACE(次キャラあり, "[-9] 次ページ")%"
 ENDIF
 
+@メインメニュー_キャラ一覧_INPUT
+
 
 @メインメニュー_人員の補充
 #DIM DYNAMIC LCOUNT
@@ -291,6 +284,18 @@ IF 雇用キャラ
 			CALL COLUMNPRINTL, 0, @"[0] はい [1] いいえ"
 		ENDIF
 	ENDIF
+ENDIF
+
+@メインメニュー_人員の補充_INPUT
+IF 雇用キャラ
+	IF CRESULT:1 == 0
+		ステータス:雇用キャラ:未加入 = 0
+		SORTCHARA ステータス:未加入
+	ELSE
+		雇用キャラ = 0
+	ENDIF
+ELSE
+	雇用キャラ = CRESULT:1
 ENDIF
 
 @メインメニュー_アイテム
@@ -350,6 +355,25 @@ ELSEIF CRESULT:1 >= 0 && アイテム名(CRESULT:1) != ""
 	CALL COLUMNPRINTL, 0, @"　[210] 売却する（資源{レア度(CRESULT:1)}個分）"
 ENDIF
 
+@メインメニュー_アイテム_INPUT
+SELECTCASE CRESULT:1
+	CASE 0 TO 99
+		選択アイテム = CRESULT:1
+	CASE 201
+		SIF アイテムページ > 0
+			アイテムページ--
+	CASE 209
+		SIF アイテムページ < 9
+			アイテムページ++
+	CASE 210
+		IF レア度(選択アイテム)
+			売却アイテム名 = %アイテム名(選択アイテム)%
+			売却額 = レア度(選択アイテム)
+			資源 += 売却額
+			CALL アイテム削除(選択アイテム)
+		ENDIF
+ENDSELECT
+
 @メインメニュー_セーブ＆ロード
 #DIM DYNAMIC LINE
 #DIM DYNAMIC LCOUNT
@@ -373,6 +397,16 @@ CALL COLUMNPRINTL, 0, ""
 SIF CRESULT:1 == 10
 	CALL COLUMNPRINTL, 0, "セーブしました"
 
+@メインメニュー_セーブ＆ロード_INPUT
+SELECTCASE CRESULT:1
+	CASE 0 TO 9
+		IF CHKDATA(CRESULT:1) == 0
+			LOADDATA CRESULT:1
+		ENDIF
+	CASE 10
+		SAVEDATA SAVEID, @"{SAVEID}"
+ENDSELECT
+
 @加入候補生成
 #DIM DYNAMIC LCOUNT
 #DIM DYNAMIC LCOUNT2
@@ -383,8 +417,7 @@ DUMPRAND
 RANDOMIZE シード値:キャラクター
 FOR LCOUNT, 0, 5
 	ADDVOIDCHARA
-	加入候補:LCOUNT = CHARANUM-1
-	対象 = 加入候補:LCOUNT
+	対象 = CHARANUM-1
 	NAME:対象 = %ランダム命名(RAND(1, 4))%
 	;3人目までが資源が必要 4～5人目は志願兵
 	SELECTCASE LCOUNT
@@ -409,6 +442,8 @@ FOR LCOUNT, 0, 5
 	;ステータスの設定 保留
 	ステータス:対象:未加入 = 1
 NEXT
+
+加入候補生成済み = 1
 
 DUMPRAND
 シード値:キャラクター = RANDDATA

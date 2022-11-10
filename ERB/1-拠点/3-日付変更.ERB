@@ -1,0 +1,39 @@
+﻿@日付変更
+#DIM DYNAMIC LCOUNT
+
+;キャラを消す都合上逆回ししないとまずい
+FOR LCOUNT, CHARANUM-1, 0, -1
+	IF ステータス:LCOUNT:未加入
+		DELCHARA LCOUNT
+		CONTINUE
+	ENDIF
+	SIF ステータス:LCOUNT:行方不明
+		CONTINUE
+	SIF ステータス:LCOUNT:VP == 0
+		CONTINUE
+	;ここらへんは難易度によっても変動する予定
+	;HPとMPは全快
+	ステータス:LCOUNT:HP = MAXHP(LCOUNT)
+	ステータス:LCOUNT:HP = MAXMP(LCOUNT)
+	;VPは1日3回復
+	ステータス:LCOUNT:VP = MIN(ステータス:LCOUNT:VP+3, MAXVP(LCOUNT))
+	;ストレスも30回復
+	ステータス:LCOUNT:ストレス値 = MAX(ステータス:LCOUNT:ストレス値-30, 0)
+	;状態異常も回復する
+	CALL 状態異常回復, LCOUNT
+NEXT
+
+加入候補生成済み = 0
+
+CALL カラム生成, "日付変更", "日付変更"
+
+@日付変更_日付変更
+;ここでログとか流したい
+CALL COLUMNPRINTL, 0, @"{DAY}日目、終了――"
+CALL COLUMNPRINTL, 0, "[0] 確認"
+
+@日付変更_日付変更_INPUT
+IF CRESULT:1 == 0
+	DAY++
+	LOOP_BREAK = 1
+ENDIF

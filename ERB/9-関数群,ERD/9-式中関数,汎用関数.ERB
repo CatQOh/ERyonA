@@ -494,3 +494,18 @@ FOR LCOUNT, 0, 3
 NEXT
 
 RETURNF 人数
+
+;;;回復可能な状態異常をすべて回復
+@状態異常回復, 対象
+#DIM DYNAMIC 対象
+#DIM DYNAMIC LCOUNT
+
+FOR LCOUNT, 0, VARSIZE("状態異常")
+	SELECTCASE ERDNAME(状態異常, LCOUNT)
+		{
+		CASE "出血", "火傷", "パニック", "窒息", "首拘束", "腕拘束", "足拘束",
+			 "失神", "放心", "恐怖", "傀儡", "麻痺", "毒"
+		}
+			状態異常:対象:LCOUNT = 0
+	ENDSELECT
+NEXT

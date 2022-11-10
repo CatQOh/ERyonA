@@ -1,0 +1,30 @@
+﻿@ダンジョン画面, DID
+#DIM DYNAMIC DID
+
+IF 戦闘中:DID
+	CALL 戦闘画面, DID
+ELSE
+	CALL 探索画面, DID
+ENDIF
+
+@ダンジョン画面_INPUT, DID
+#DIM DYNAMIC DID
+
+IF 戦闘中:DID
+	CALL 戦闘画面_INPUT, DID
+ELSE
+	CALL 探索画面_INPUT, DID
+ENDIF
+
+
+@戦闘画面, DID
+#DIM DYNAMIC DID
+
+@戦闘画面_INPUT, DID
+#DIM DYNAMIC DID
+
+@探索画面, DID
+#DIM DYNAMIC DID
+
+@探索画面_INPUT, DID
+#DIM DYNAMIC DID
