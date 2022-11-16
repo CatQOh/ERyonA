@@ -27,6 +27,8 @@
 
 #DIM SAVEDATA アイテム, 100
 
+#DIM SAVEDATA NOCOUNT
+
 #DIM SAVEDATA 倉庫
 #DIM SAVEDATA 部隊数
 #DIM SAVEDATA 資源
@@ -59,3 +61,7 @@
 
 #DIM 戦闘中, 10
 #DIM 進行度, 10
+
+#DIM アイテム表示中, 10
+#DIM ステータス表示中, 10
+#DIM アイテム使用中, 10

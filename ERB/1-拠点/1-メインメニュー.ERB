@@ -144,7 +144,7 @@ IF 部隊編成
 				CALL COLUMNPRINTL, 0, @"　空き [{LCOUNT}] - 配属"
 				CONTINUE
 			ENDIF
-			対象 = 部隊メンバー:ID:LCOUNT
+			対象 = GETCHARA(部隊メンバー:ID:LCOUNT)
 
 			CALL ステータス表示, 対象, @"[{LCOUNT}] - 変更する"
 			CALL COLUMNPRINTL, 0, ""
@@ -167,8 +167,8 @@ IF 部隊編成
 			部隊スロット = -1
 		ELSE
 			SIF 部隊メンバー:部隊編成:部隊スロット
-				ステータス:(部隊メンバー:部隊編成:部隊スロット):所属部隊 = 0
-			部隊メンバー:部隊編成:部隊スロット = CRESULT:1
+				ステータス:GETCHARA(部隊メンバー:部隊編成:部隊スロット):所属部隊 = 0
+			部隊メンバー:部隊編成:部隊スロット = NO:(CRESULT:1)
 			ステータス:(CRESULT:1):所属部隊 = 部隊編成
 			CRESULT:1 = 0
 			部隊スロット = -1
@@ -185,6 +185,11 @@ ELSE
 		CASE 1 TO 部隊数
 			部隊編成 = CRESULT:1
 			;CALL 部隊編成, CRESULT:1
+		CASE 0
+			IF 資源 >= 部隊数*100
+				資源 -= 部隊数*100
+				部隊数++
+			ENDIF
 	ENDSELECT
 ENDIF
 
@@ -419,6 +424,8 @@ FOR LCOUNT, 0, 5
 	ADDVOIDCHARA
 	対象 = CHARANUM-1
 	NAME:対象 = %ランダム命名(RAND(1, 4))%
+	;1から始める
+	NO:対象 = ++NOCOUNT
 	;3人目までが資源が必要 4～5人目は志願兵
 	SELECTCASE LCOUNT
 		CASE 0 TO 2

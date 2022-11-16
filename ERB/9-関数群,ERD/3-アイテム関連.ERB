@@ -26,6 +26,7 @@
 "必要器用",
 "必要感覚",
 "必要運勢",
+"対象無し",
 "説明",
 }
 
@@ -243,6 +244,7 @@ DT_ROW_ADD "アイテム一覧", "名前", "水晶", "レア度", 1, "耐久値"
 "必要器用",
 "必要感覚",
 "必要運勢",
+"対象無し",
 "説明",
 }
 
@@ -268,3 +270,273 @@ FOR LCOUNT, 0, VARSIZE("COLUMNNAME")
 NEXT
 
 RETURN
+
+;;;指定したアイテムIDがどの部隊のものでもない（拠点で扱えるフリーなものか）を判別する
+@拠点アイテム, ITEMID
+#FUNCTION
+#DIM DYNAMIC ITEMID
+
+SIF DT_CELL_GETS("アイテム", ITEMID, "名前") == ""
+	RETURNF 0
+
+RETURNF (DT_CELL_ISNULL("アイテム", ITEMID, "所有部隊") || DT_CELL_GET("アイテム", ITEMID, "所持部隊") == 0) && (DT_CELL_ISNULL("アイテム", ITEMID, "装備中") || DT_CELL_GET("アイテム", ITEMID, "装備中") == 0)
+
+@アイテム名, ITEMID
+#FUNCTIONS
+#DIM DYNAMIC ITEMID
+
+RETURNF DT_CELL_GETS("アイテム", ITEMID, "名前")
+
+@レア度, ITEMID
+#FUNCTION
+#DIM DYNAMIC ITEMID
+
+RETURNF DT_CELL_GET("アイテム", ITEMID, "レア度")
+
+@装備中, ITEMID
+#FUNCTION
+#DIM DYNAMIC ITEMID
+
+SIF DT_CELL_ISNULL("アイテム", ITEMID, "装備中")
+	RETURNF 0
+RETURNF DT_CELL_GET("アイテム", ITEMID, "装備中")
+
+@装備手, ITEMID
+#FUNCTIONS
+#DIM DYNAMIC ITEMID
+
+SIF DT_CELL_ISNULL("アイテム", ITEMID, "装備手")
+	RETURNF ""
+RETURNF DT_CELL_GETS("アイテム", ITEMID, "装備手")
+
+@所有部隊, ITEMID
+#FUNCTION
+#DIM DYNAMIC ITEMID
+
+SIF DT_CELL_ISNULL("アイテム", ITEMID, "所有部隊")
+	RETURNF 0
+RETURNF DT_CELL_GET("アイテム", ITEMID, "所有部隊")
+
+@耐久値, ITEMID
+#FUNCTION
+#DIM DYNAMIC ITEMID
+
+SIF DT_CELL_ISNULL("アイテム", ITEMID, "耐久値")
+	RETURNF 0
+RETURNF DT_CELL_GET("アイテム", ITEMID, "耐久値")
+
+@分類, ITEMID
+#FUNCTIONS
+#DIM DYNAMIC ITEMID
+
+SIF DT_CELL_ISNULL("アイテム", ITEMID, "分類")
+	RETURNF ""
+RETURNF DT_CELL_GETS("アイテム", ITEMID, "分類")
+
+@攻撃力, ITEMID
+#FUNCTION
+#DIM DYNAMIC ITEMID
+
+SIF DT_CELL_ISNULL("アイテム", ITEMID, "攻撃力")
+	RETURNF 0
+RETURNF DT_CELL_GET("アイテム", ITEMID, "攻撃力")
+
+@防御力, ITEMID
+#FUNCTION
+#DIM DYNAMIC ITEMID
+
+SIF DT_CELL_ISNULL("アイテム", ITEMID, "防御力")
+	RETURNF 0
+RETURNF DT_CELL_GET("アイテム", ITEMID, "防御力")
+
+@命中率, ITEMID
+#FUNCTION
+#DIM DYNAMIC ITEMID
+
+SIF DT_CELL_ISNULL("アイテム", ITEMID, "命中率")
+	RETURNF 0
+RETURNF DT_CELL_GET("アイテム", ITEMID, "命中率")
+
+@特殊効果, ITEMID
+#FUNCTIONS
+#DIM DYNAMIC ITEMID
+
+SIF DT_CELL_ISNULL("アイテム", ITEMID, "特殊効果")
+	RETURNF ""
+RETURNF DT_CELL_GETS("アイテム", ITEMID, "特殊効果")
+
+@重量, ITEMID
+#FUNCTION
+#DIM DYNAMIC ITEMID
+
+SIF DT_CELL_ISNULL("アイテム", ITEMID, "重量")
+	RETURNF 0
+RETURNF DT_CELL_GET("アイテム", ITEMID, "重量")
+
+@要求ステータス, ITEMID, 要求ステータス
+#FUNCTION
+#DIM DYNAMIC ITEMID
+#DIMS DYNAMIC 要求ステータス
+
+SELECTCASE 要求ステータス
+	CASE "必要筋力", "筋力"
+		SIF DT_CELL_ISNULL("アイテム", ITEMID, "必要筋力")
+			RETURNF 0
+		RETURNF DT_CELL_GET("アイテム", ITEMID, "必要筋力")
+	CASE "必要耐久", "耐久"
+		SIF DT_CELL_ISNULL("アイテム", ITEMID, "必要耐久")
+			RETURNF 0
+		RETURNF DT_CELL_GET("アイテム", ITEMID, "必要耐久")
+	CASE "必要知性", "知性"
+		SIF DT_CELL_ISNULL("アイテム", ITEMID, "必要知性")
+			RETURNF 0
+		RETURNF DT_CELL_GET("アイテム", ITEMID, "必要知性")
+	CASE "必要器用", "器用"
+		SIF DT_CELL_ISNULL("アイテム", ITEMID, "必要器用")
+			RETURNF 0
+		RETURNF DT_CELL_GET("アイテム", ITEMID, "必要器用")
+	CASE "必要感覚", "感覚"
+		SIF DT_CELL_ISNULL("アイテム", ITEMID, "必要感覚")
+			RETURNF 0
+		RETURNF DT_CELL_GET("アイテム", ITEMID, "必要感覚")
+	CASE "必要運勢", "運勢"
+		SIF DT_CELL_ISNULL("アイテム", ITEMID, "必要運勢")
+			RETURNF 0
+		RETURNF DT_CELL_GET("アイテム", ITEMID, "必要運勢")
+ENDSELECT
+
+@対象無し, ITEMID
+#FUNCTION
+#DIM DYNAMIC ITEMID
+
+SIF DT_CELL_ISNULL("アイテム", ITEMID, "対象無し")
+	RETURNF 0
+RETURNF DT_CELL_GET("アイテム", ITEMID, "対象無し")
+
+@説明, ITEMID
+#FUNCTIONS
+#DIM DYNAMIC ITEMID
+
+SIF DT_CELL_ISNULL("アイテム", ITEMID, "説明")
+	RETURNF ""
+RETURNF DT_CELL_GETS("アイテム", ITEMID, "説明")
+
+@アイテム削除, ITEMID
+#DIM DYNAMIC ITEMID
+
+DT_ROW_REMOVE "アイテム", DT_CELL_GET("アイテム", ITEMID, "id")
+
+@拠点アイテム総数, ARG
+#FUNCTION
+#DIM DYNAMIC ITEMCOUNT
+#DIM DYNAMIC LCOUNT
+
+FOR LCOUNT, 0, DT_ROW_LENGTH("アイテム")
+	SIF (DT_CELL_ISNULL("アイテム", LCOUNT, "所有部隊") || DT_CELL_GET("アイテム", LCOUNT, "所持部隊") == 0) && (DT_CELL_ISNULL("アイテム", LCOUNT, "装備中") || DT_CELL_GET("アイテム", LCOUNT, "装備中") == 0)
+		ITEMCOUNT++
+NEXT
+
+RETURNF ITEMCOUNT
+
+@部隊アイテム総数, 部隊ID
+#FUNCTION
+#DIM DYNAMIC 部隊ID
+#DIM DYNAMIC 総数
+#DIM DYNAMIC LCOUNT
+
+FOR LCOUNT, 0, DT_ROW_LENGTH("アイテム")
+	SIF 所有部隊(LCOUNT) == 部隊ID
+		総数++
+NEXT
+
+RETURNF 総数
+
+
+@部隊アイテム重量, 部隊ID
+#FUNCTION
+#DIM DYNAMIC 部隊ID
+#DIM DYNAMIC 総重量
+#DIM DYNAMIC LCOUNT
+
+FOR LCOUNT, 0, DT_ROW_LENGTH("アイテム")
+	SIF 所有部隊(LCOUNT) == 部隊ID
+		総重量 += 重量(LCOUNT)
+NEXT
+
+RETURNF 総重量
+
+@部隊アイテム重量上限, 部隊ID
+#FUNCTION
+#DIM DYNAMIC 部隊ID
+#DIM DYNAMIC LCOUNT
+#DIM DYNAMIC 総重量
+#DIM DYNAMIC 対象
+
+FOR LCOUNT, 0, 3
+	IF 部隊メンバー:部隊ID:LCOUNT
+		対象 = GETNUM(部隊メンバー:部隊ID:LCOUNT)
+		SIF ステータス:対象:VP == 0
+			CONTINUE
+		総重量 += 3
+		総重量 += ステータス:対象:筋力
+	ENDIF
+NEXT
+
+RETURNF 総重量
+
+@部隊アイテム表示, 部隊ID
+#DIM DYNAMIC LCOUNT
+#DIMS DYNAMIC 分類
+#DIMS DYNAMIC 装備条件
+#DIM DYNAMIC 要求値
+#DIMS DYNAMIC 文字色
+#DIM DYNAMIC 部隊ID
+#DIM DYNAMIC 表示済み
+{
+#DIMS DYNAMIC 要求項目 =
+"必要筋力",
+"必要耐久",
+"必要知性",
+"必要器用",
+"必要感覚",
+"必要運勢",
+}
+
+CALL COLUMNPRINTL ,0, @"□アイテム重量:{部隊アイテム重量(部隊ID)}/{部隊アイテム重量上限(部隊ID)}"
+
+FOR LCOUNT, 0, DT_ROW_LENGTH("アイテム")
+	IF 所有部隊(LCOUNT) == 部隊ID
+		SELECTCASE レア度(LCOUNT)
+			CASE 1
+				文字色 = silver
+			CASE 2
+				文字色 = lime
+			CASE 3
+				文字色 = deepskyblue
+			CASE 4
+				文字色 = purple
+			CASE IS >= 5
+				文字色 = gold
+		ENDSELECT
+		CALL COLUMNPRINTL, 0, @"[{LCOUNT}] %アイテム名(LCOUNT)%(レア度:{レア度(LCOUNT)} 重量:{重量(LCOUNT)})", 文字色
+	ENDIF
+NEXT
+;CALL COLUMNPRINTL, 0, @"%RETURNSPACE(アイテムページ > 0, "[201] 前ページ")% %RETURNSPACE(DT_ROW_LENGTH("アイテム") > LCOUNT && 拠点アイテム(LCOUNT+1), "[209] 次ページ")%"
+IF CRESULT:1 >= 0 && アイテム名(CRESULT:1) != ""
+	FOR LCOUNT, 0, VARSIZE("要求項目")
+		要求値 = 要求ステータス(CRESULT:1, 要求項目:LCOUNT)
+		SIF 要求値
+			装備条件 += @"%要求項目:LCOUNT%:{要求値} "
+	NEXT
+	分類 = %DT_CELL_GETS("アイテム", CRESULT:1, "分類")%
+	CALL COLUMNPRINTL, 0, @"□%DT_CELL_GETS("アイテム", CRESULT:1, "名前")%（ID:{CRESULT:1}）"
+	CALL COLUMNPRINTL, 0, @"　レア度:{レア度(CRESULT:1)} \@ 分類 == "消耗品" ? 残り使用回数 # 耐久値 \@:{耐久値(CRESULT:1)} 分類:%分類%"
+	SIF 装備条件 != ""
+		CALL COLUMNPRINTL, 0, @"　%装備条件%"
+	CALL COLUMNPRINTL, 0, @"　\@ 攻撃力(CRESULT:1) ? 攻撃力:{攻撃力(CRESULT:1)}%" "% #\@\@ 防御力(CRESULT:1) ? 防御力:{防御力(CRESULT:1)}%" "% #\@\@ 命中率(CRESULT:1) ? 命中率:{命中率(CRESULT:1)}%" "% #\@\@ 特殊効果(CRESULT:1) != "" ? 特殊効果:%特殊効果(CRESULT:1)%%" "% #\@\@ 重量(CRESULT:1) ? 重量:{重量(CRESULT:1)} #\@"
+	CALL COLUMNPRINTL, 0, @"　%説明(CRESULT:1)%"
+ENDIF
+
+@アイテム使用, ITEMID, 対象
+#DIM DYNAMIC ITEMID
+#DIM DYNAMIC 対象

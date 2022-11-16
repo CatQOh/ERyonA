@@ -25,6 +25,72 @@ ENDIF
 
 @探索画面, DID
 #DIM DYNAMIC DID
+#DIM DYNAMIC LCOUNT
+#DIM DYNAMIC 部隊ID
+#DIMS DYNAMIC ダンジョン表示用
+
+部隊ID = FINDELEMENT(部隊目標, DID)
+
+CALL 部隊メンバー表示, 部隊ID
+CALL COLUMNPRINTL, 0, ""
+CALL COLUMNPRINTL, 0, "[3] - アイテム"
+CALL COLUMNPRINTL, 0, ""
+CALL COLUMNPRINTL, 0, @"現在の進行度:{進行度:DID}/{ダンジョンレベル(DID)+10}"
+FOR LCOUNT, 0, ダンジョンレベル(DID)+10
+	IF LCOUNT == 進行度:DID
+		ダンジョン表示用 += "■"
+	ELSE
+		ダンジョン表示用 += "□"
+	ENDIF
+NEXT
+CALL COLUMNPRINTL, 0, @"%ダンジョン表示用%"
+CALL COLUMNPRINTL, 0, @"%RETURNSPACE(進行度:DID > 1, "[10] 戻る")% %RETURNSPACE(進行度:DID < ダンジョンレベル(DID)+10, "[19] 進む")%"
+SIF 進行度:DID == 1
+	CALL COLUMNPRINTL, 0, "[20] ダンジョンから脱出する"
 
 @探索画面_INPUT, DID
 #DIM DYNAMIC DID
+#DIM DYNAMIC 部隊ID
+
+部隊ID = FINDELEMENT(部隊目標, DID)
+
+IF アイテム表示中:DID
+	IF アイテム使用中:DID
+		IF 対象無し(アイテム使用中:DID)
+			SELECTCASE CRESULT:1
+				CASE 0
+					CALL アイテム使用, アイテム使用中:DID
+				CASE 1
+					アイテム使用中:DID = -1
+			ENDSELECT
+		ELSE
+			SELECTCASE RESULT:1
+				CASE 0 TO 2
+					CALL アイテム使用, アイテム使用中:DID, GETCHARA(部隊メンバー:部隊ID:(CRESULT:1))
+				CASE 3
+					アイテム使用中:DID = -1
+			ENDSELECT
+		ENDIF
+	ELSE
+		SELECTCASE CRESULT:1
+			CASE -1
+				アイテム表示中:DID = 0
+			CASE 0 TO DT_ROW_LENGTH("アイテム")-1
+				SIF 所有部隊(CRESULT:1) == 部隊ID
+					アイテム使用中 = CRESULT:1
+		ENDSELECT
+	ENDIF
+ELSEIF ステータス表示中:DID >= 0
+	SELECTCASE CRESULT:1
+	ENDSELECT
+ELSE
+	SELECTCASE CRESULT:1
+		CASE 0 TO 2
+			SIF 部隊メンバー:部隊ID:(CRESULT:1)
+				CALL キャラ詳細表示, 部隊メンバー:部隊ID:(CRESULT:1)
+		CASE 3
+			アイテム表示中:DID = 1
+			CALL 部隊アイテム表示
+	ENDSELECT
+ENDIF
+	
