@@ -4,8 +4,10 @@
 #DIMS DYNAMIC カラムメニュー, 10
 DO
 	CALL カラム生成2, カラム, カラムメニュー:0, カラムメニュー:1, カラムメニュー:2, カラムメニュー:3, カラムメニュー:4, カラムメニュー:5, カラムメニュー:6, カラムメニュー:7, カラムメニュー:8, カラムメニュー:9
-	SIF LOOP_BREAK
+	IF LOOP_BREAK
+		選択カラム = 0
 		BREAK
+	ENDIF
 LOOP 1
 
 @カラム生成2, カラム, カラムメニュー:0, カラムメニュー:1, カラムメニュー:2, カラムメニュー:3, カラムメニュー:4, カラムメニュー:5, カラムメニュー:6, カラムメニュー:7, カラムメニュー:8, カラムメニュー:9
@@ -103,7 +105,7 @@ FOR LINE, 0, MAX_LINE+2
 						SELECTCASE LCOUNT
 							CASE 0
 								;/で区切られてれば関数と表示を分ける
-								SPLIT カラムメニュー, "/", SPLITVAR
+								SPLIT カラムメニュー:(LINE/2), "/", SPLITVAR
 								IF RESULT == 2
 									PRINTFORM │[{LINE/2+10000}] %SPLITVAR:0, (文字数計算用-4)*2, LEFT%
 								ELSE
@@ -196,7 +198,13 @@ SELECTCASE RESULT
 	CASEELSE
 		CRESULT:0 = 選択カラム
 		CRESULT:1 = RESULT
-		TRYCALLFORM %カラム%_%カラムメニュー:選択カラム%_INPUT
+		;/で区切られてれば関数と表示を分ける
+		SPLIT カラムメニュー:選択カラム, "/", SPLITVAR
+		IF RESULT == 2
+			TRYCALLFORM %カラム%_%SPLITVAR:1%_INPUT
+		ELSE
+			TRYCALLFORM %カラム%_%カラムメニュー:選択カラム%_INPUT
+		ENDIF
 		REDRAW 1
 		RETURN
 ENDSELECT

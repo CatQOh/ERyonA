@@ -33,6 +33,7 @@ DT_COLUMN_OPTIONS "ダンジョン", "探索部隊", DEFAULT, -1
 #DIM DYNAMIC 不足分
 #DIM DYNAMIC 乱数
 #DIMS DYNAMIC ダンジョン名
+#DIM DYNAMIC LV
 
 不足分 = 10-DT_ROW_LENGTH("ダンジョン")
 
@@ -47,7 +48,12 @@ RANDOMIZE シード値:ダンジョン
 ダンジョン名 = ダンジョン
 
 FOR LCOUNT, 0, 不足分
-	DT_ROW_ADD "ダンジョン", "名前", ダンジョン名, "レベル", RAND:DAY+1
+	IF DAY > 5
+		LV = RAND(DAY-5, DAY+5)
+	ELSE
+		LV = RAND(1, DAY+5)
+	ENDIF
+	DT_ROW_ADD "ダンジョン", "名前", ダンジョン名, "レベル", LV
 NEXT
 
 DUMPRAND

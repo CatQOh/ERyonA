@@ -365,9 +365,9 @@ FOR LCOUNT, 0, 3
 	CALL COLUMNMOVE, LCOUNT+1, LCOUNT*2000, 0
 	CALL COLUMNIMG, LCOUNT+1, @"%CSTR:対象:顔グラ%", 顔グラサイズ*100, 顔グラサイズ*100
 	CALL COLUMNPRINTL, LCOUNT+1, @" [{LCOUNT}] 名前:%NAME:対象, 10, LEFT%"
-	CALL COLUMNPRINTL, LCOUNT+1, @"%"　", 顔グラサイズ% レベル:{ステータス:対象:レベル, 2, LEFT}"
-	CALL COLUMNPRINTL, LCOUNT+1, @"%"　", 顔グラサイズ% 職業:%CSTR:対象:職業, 16, LEFT%"
-	CALL COLUMNPRINT, LCOUNT+1, @"%"　", 顔グラサイズ% HP:{ステータス:対象:HP, 2}/{MAXHP(対象), 2, LEFT} ", "lime"
+	CALL COLUMNPRINTL, LCOUNT+1, @"%"　"*顔グラサイズ% レベル:{ステータス:対象:レベル, 2, LEFT}"
+	CALL COLUMNPRINTL, LCOUNT+1, @"%"　"*顔グラサイズ% 職業:%CSTR:対象:職業, 16, LEFT%"
+	CALL COLUMNPRINT, LCOUNT+1, @"%"　"*顔グラサイズ% HP:{ステータス:対象:HP, 2}/{MAXHP(対象), 2, LEFT} ", "lime"
 	CALL COLUMNPRINT, LCOUNT+1, @"MP:{ステータス:対象:MP, 2}/{MAXMP(対象), 2, LEFT} ", "deepskyblue"
 	CALL COLUMNPRINTL, LCOUNT+1, @"VP:{ステータス:対象:VP, 2}/{MAXVP(対象), 2, LEFT} ", "yellow"
 NEXT

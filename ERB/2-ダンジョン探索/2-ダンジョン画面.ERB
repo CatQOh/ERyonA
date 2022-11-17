@@ -1,5 +1,17 @@
 ﻿@ダンジョン画面, DID
 #DIM DYNAMIC DID
+#DIM DYNAMIC LCOUNT
+#DIM DYNAMIC 計算用, 2
+
+FOR LCOUNT, 1, 11
+	IF 部隊目標:LCOUNT >= 0
+		計算用:0++
+		SIF ダンジョンクリア:(部隊目標:LCOUNT)
+			計算用:1++
+	ENDIF
+NEXT
+SIF 計算用:0 == 計算用:1
+	オールクリア = 1
 
 IF 戦闘中:DID
 	CALL 戦闘画面, DID
@@ -36,7 +48,7 @@ CALL COLUMNPRINTL, 0, ""
 CALL COLUMNPRINTL, 0, "[3] - アイテム"
 CALL COLUMNPRINTL, 0, ""
 CALL COLUMNPRINTL, 0, @"現在の進行度:{進行度:DID}/{ダンジョンレベル(DID)+10}"
-FOR LCOUNT, 0, ダンジョンレベル(DID)+10
+FOR LCOUNT, 1, ダンジョンレベル(DID)+11
 	IF LCOUNT == 進行度:DID
 		ダンジョン表示用 += "■"
 	ELSE
@@ -44,15 +56,38 @@ FOR LCOUNT, 0, ダンジョンレベル(DID)+10
 	ENDIF
 NEXT
 CALL COLUMNPRINTL, 0, @"%ダンジョン表示用%"
-CALL COLUMNPRINTL, 0, @"%RETURNSPACE(進行度:DID > 1, "[10] 戻る")% %RETURNSPACE(進行度:DID < ダンジョンレベル(DID)+10, "[19] 進む")%"
-SIF 進行度:DID == 1
-	CALL COLUMNPRINTL, 0, "[20] ダンジョンから脱出する"
+IF ダンジョンクリア:DID
+	IF ダンジョンクリア:DID == 1
+		CALL COLUMNPRINTL, 0, @"%ダンジョン名(DID)%を制覇した！" 
+	ELSEIF ダンジョンクリア:DID == 2
+		CALL COLUMNPRINTL, 0, @"%ダンジョン名(DID)%を探索する部隊{部隊ID}は全滅した……" 
+	ELSEIF ダンジョンクリア:DID == 3
+		CALL COLUMNPRINTL, 0, @"%ダンジョン名(DID)%の探索を中断した" 
+	ENDIF
+
+	IF オールクリア
+		CALL COLUMNPRINTL, 0, "全ダンジョンの探索を終えた"
+		CALL COLUMNPRINTL, 0, "[30] 帰還する"
+	ENDIF
+ELSE
+	CALL COLUMNPRINTL, 0, @"%RETURNSPACE(進行度:DID > 1, "[10] 戻る")% %RETURNSPACE(進行度:DID < ダンジョンレベル(DID)+10, "[19] 進む")%"
+	IF 帰還確認:DID
+		CALL COLUMNPRINTL, 0, "探索は終了していません。本当に脱出しますか？"
+		CALL COLUMNPRINTL, 0, "[20] はい [21] いいえ"
+	ELSE
+		SIF 進行度:DID == 1
+			CALL COLUMNPRINTL, 0, "[20] ダンジョンから脱出する"
+	ENDIF
+ENDIF
+
 
 @探索画面_INPUT, DID
 #DIM DYNAMIC DID
 #DIM DYNAMIC 部隊ID
 
 部隊ID = FINDELEMENT(部隊目標, DID)
+
+DEBUGPRINTFORML {DID}
 
 IF アイテム表示中:DID
 	IF アイテム使用中:DID
@@ -91,6 +126,34 @@ ELSE
 		CASE 3
 			アイテム表示中:DID = 1
 			CALL 部隊アイテム表示
+		CASE 10
+			IF 進行度:DID > 1
+				進行度:DID--
+				CALL エンカウント, DID
+			ENDIF
+		CASE 19
+			IF 進行度:DID < ダンジョンレベル(DID)+10
+				進行度:DID++
+				CALL エンカウント, DID
+			ENDIF
+		CASE 20
+			IF 帰還確認:DID
+				ダンジョンクリア:DID = 3
+			ELSE
+				帰還確認:DID = 1
+			ENDIF
+		CASE 21
+			帰還確認:DID = 0
+		CASE 30
+			SIF オールクリア
+				LOOP_BREAK = 1
 	ENDSELECT
 ENDIF
 	
+@エンカウント, DID
+#DIM DYNAMIC DID
+
+IF 進行度:DID == ダンジョンレベル(DID)+10
+	PRINTFORMW ここでボス戦
+	ダンジョンクリア:DID = 1
+ENDIF
