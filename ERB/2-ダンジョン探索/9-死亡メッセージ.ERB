@@ -1,0 +1,28 @@
+﻿@死亡メッセージ, 死亡者, 死因
+#FUNCTIONS
+#DIMS DYNAMIC 死亡者
+#DIMS DYNAMIC 死因
+#DIM DYNAMIC 対象 = -1
+#DIMS メッセージ
+
+SIF ISNUMERIC(死亡者)
+	対象 = TOINT(死亡者)
+
+IF 対象 >= 0
+
+ELSE
+	SELECTCASE 死亡者
+		CASE "ハウンド"
+			SELECTCASE 死因
+				CASE "剣撃"
+					STRDATA メッセージ
+						DATA ハウンドは首を切り落とされ、血を噴き出しながら死んだ
+						DATA ハウンドは胴体を切断され、内蔵をこぼしながら悶え苦しみやがて死んだ
+						DATA ハウンドは足を切り落とされてもがくも、出血多量で死んだ
+						DATA ハウンドの口内から水平に刃が走り、眼球と脳をぶちまけて死んだ
+					ENDDATA
+			ENDSELECT
+	ENDSELECT
+ENDIF
+
+RETURNF メッセージ

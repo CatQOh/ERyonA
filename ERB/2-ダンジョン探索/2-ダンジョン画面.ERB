@@ -13,7 +13,7 @@ NEXT
 SIF 計算用:0 == 計算用:1
 	オールクリア = 1
 
-IF 戦闘中:DID
+IF 戦闘中:DID == 2
 	CALL 戦闘画面, DID
 ELSE
 	CALL 探索画面, DID
@@ -22,7 +22,7 @@ ENDIF
 @ダンジョン画面_INPUT, DID
 #DIM DYNAMIC DID
 
-IF 戦闘中:DID
+IF 戦闘中:DID == 2
 	CALL 戦闘画面_INPUT, DID
 ELSE
 	CALL 探索画面_INPUT, DID
@@ -31,9 +31,167 @@ ENDIF
 
 @戦闘画面, DID
 #DIM DYNAMIC DID
+#DIM DYNAMIC 部隊ID
+#DIM DYNAMIC LCOUNT
+#DIM DYNAMIC 対象
+#DIM DYNAMIC ISBREAK
+
+部隊ID = FINDELEMENT(部隊目標, DID)
+
+SELECTCASE 行動内容:DID
+	CASE "通常攻撃"
+	CASE "スキル"
+	CASE "アイテム"
+	CASE "逃走"
+	CASEELSE
+		行動可能:DID = -1
+		FOR LCOUNT, 0, 3
+			SIF !部隊メンバー:部隊ID:LCOUNT
+				CONTINUE
+			対象 = GETCHARA(部隊メンバー:部隊ID:LCOUNT)
+			IF ステータス:対象:TG >= 10000
+				行動可能:DID = LCOUNT
+				GOTO BREAK
+			ENDIF
+		NEXT
+		FOR LCOUNT, 0, 5
+			SIF 敵名:DID:LCOUNT == ""
+				CONTINUE
+			IF 敵ステータス:DID:LCOUNT:TG >= 10000
+				行動可能:DID = LCOUNT+10
+				GOTO BREAK
+			ENDIF
+		NEXT
+
+		DO
+			FOR LCOUNT, 0, 3
+				SIF !部隊メンバー:部隊ID:LCOUNT
+					CONTINUE
+				対象 = GETCHARA(部隊メンバー:部隊ID:LCOUNT)
+				ステータス:対象:TG += 100
+				ステータス:対象:TG += ステータス:対象:器用*5
+				IF ステータス:対象:TG >= 10000
+					SIF 行動可能:DID == -1
+						行動可能:DID = LCOUNT
+					ISBREAK = 1
+				ENDIF
+			NEXT
+			FOR LCOUNT, 0, 5
+				SIF 敵名:DID:LCOUNT == ""
+					CONTINUE
+				敵ステータス:DID:LCOUNT:TG += 100
+				敵ステータス:DID:LCOUNT:TG += 敵ステータス:DID:LCOUNT:器用*5
+				IF 敵ステータス:DID:LCOUNT:TG >= 10000
+					SIF 行動可能:DID == -1
+						行動可能:DID = LCOUNT+10
+					ISBREAK = 1
+				ENDIF
+			NEXT
+			SIF ISBREAK
+				BREAK
+		LOOP 1
+ENDSELECT
+
+$BREAK
+
+CALL 戦闘用部隊メンバー表示, 部隊ID
+;CALL COLUMNPRINTL, 0, ""
+;CALL COLUMNPRINTL, 0, "[3] - アイテム"
+CALL 敵表示, DID
+
+IF 敵数(DID) == 0
+	CALL COLUMNPRINTL, 0, "戦闘に勝利した！"
+	CALL COLUMNPRINTL, 0, "[30] 探索に戻る"
+ELSEIF 行動可能:DID < 10
+	対象 = GETCHARA(部隊メンバー:部隊ID:(行動可能:DID))
+	CALL COLUMNPRINTL, 0, @"%NAME:対象%のターン"
+	SELECTCASE 行動内容:DID
+		CASE "通常攻撃"
+			IF 攻撃対象:DID == -1
+				CALL COLUMNPRINTL, 0, "誰を攻撃しますか？"
+			ELSE
+				IF 攻撃対象:DID < 10
+					CALL COLUMNPRINTL, 0, @""
+				ELSE
+					CALL COLUMNPRINTL, 0, @"%NAME:対象%は%敵名:DID:(攻撃対象:DID-10)%を攻撃した！"
+					CALL COLUMNPRINTL, 0, @"{ダメージ:DID}のダメージ！"
+					SIF ダメージ:DID >= 敵ステータス:DID:(攻撃対象:DID-10):HP
+						CALL COLUMNPRINTL, 0, 死亡メッセージ(敵名:DID:(攻撃対象:DID-10), "剣撃")
+				ENDIF
+				CALL COLUMNPRINTL, 0, "[30] 戦闘継続"
+			ENDIF
+		CASEELSE
+			CALL COLUMNPRINTL, 0, @"[20] 通常攻撃 [21] スキル [22] アイテム [23] 逃走"
+	ENDSELECT
+ELSE
+	対象 = 行動可能:DID-10
+	CALL COLUMNPRINTL, 0, @"%敵名:DID:対象%のターン"
+ENDIF
 
 @戦闘画面_INPUT, DID
 #DIM DYNAMIC DID
+#DIM DYNAMIC 対象
+#DIM DYNAMIC 部隊ID
+#DIM DYNAMIC LCOUNT
+
+部隊ID = FINDELEMENT(部隊目標, DID)
+
+IF 敵数(DID) == 0
+	行動内容:DID =
+	行動可能:DID = -1
+	攻撃対象:DID = -1
+	ダメージ:DID = 0
+	戦闘中:DID = 0
+	FOR LCOUNT, 0, 10
+		CALL COLUMNBGCOLOR, LCOUNT, "black"
+	NEXT
+ELSEIF 行動可能:DID < 10
+	対象 = GETCHARA(部隊メンバー:部隊ID:(行動可能:DID))
+	SELECTCASE 行動内容:DID
+		CASE "通常攻撃"
+			IF 攻撃対象:DID >= 0
+				IF 攻撃対象:DID < 10
+				ELSE
+					敵ステータス:DID:(攻撃対象:DID-10):HP -= ダメージ:DID
+					SIF 敵ステータス:DID:(攻撃対象:DID-10):HP <= 0
+						敵名:DID:(攻撃対象:DID-10) =
+				ENDIF
+				行動内容:DID =
+				行動可能:DID = -1
+				攻撃対象:DID = -1
+				ダメージ:DID = 0
+				ステータス:対象:TG -= 10000
+			ELSEIF 攻撃対象:DID == -1
+				SELECTCASE CRESULT:1
+					CASE 0 TO 2
+						IF GETCHARA(部隊メンバー:部隊ID:(CRESULT:1)) >= 0
+							攻撃対象:DID = CRESULT:1
+							;ダメージ計算式は後で作る
+							ダメージ:DID = 5
+						ENDIF
+					CASE 10 TO 14
+						IF 敵名:DID:(CRESULT:1-10) != ""
+							攻撃対象:DID = CRESULT:1
+							;ダメージ計算式は後で作る
+							ダメージ:DID = 5
+						ENDIF
+				ENDSELECT
+			ENDIF
+		CASEELSE
+			SELECTCASE CRESULT:1
+				CASE 20
+					行動内容:DID = 通常攻撃
+				CASE 21
+					行動内容:DID = スキル
+				CASE 22
+					行動内容:DID = アイテム
+				CASE 23
+					行動内容:DID = 逃走
+			ENDSELECT
+	ENDSELECT
+ELSE
+	敵ステータス:DID:(行動可能:DID-10):TG -= 10000
+ENDIF
 
 @探索画面, DID
 #DIM DYNAMIC DID
@@ -45,7 +203,11 @@ ENDIF
 
 CALL 部隊メンバー表示, 部隊ID
 CALL COLUMNPRINTL, 0, ""
-CALL COLUMNPRINTL, 0, "[3] - アイテム"
+IF 戦闘中:DID || ダンジョンクリア:DID
+	CALL COLUMNPRINTL, 0, ""
+ELSE
+	CALL COLUMNPRINTL, 0, "[3] - アイテム"
+ENDIF
 CALL COLUMNPRINTL, 0, ""
 CALL COLUMNPRINTL, 0, @"現在の進行度:{進行度:DID}/{ダンジョンレベル(DID)+10}"
 FOR LCOUNT, 1, ダンジョンレベル(DID)+11
@@ -56,38 +218,40 @@ FOR LCOUNT, 1, ダンジョンレベル(DID)+11
 	ENDIF
 NEXT
 CALL COLUMNPRINTL, 0, @"%ダンジョン表示用%"
-IF ダンジョンクリア:DID
-	IF ダンジョンクリア:DID == 1
-		CALL COLUMNPRINTL, 0, @"%ダンジョン名(DID)%を制覇した！" 
-	ELSEIF ダンジョンクリア:DID == 2
-		CALL COLUMNPRINTL, 0, @"%ダンジョン名(DID)%を探索する部隊{部隊ID}は全滅した……" 
-	ELSEIF ダンジョンクリア:DID == 3
-		CALL COLUMNPRINTL, 0, @"%ダンジョン名(DID)%の探索を中断した" 
-	ENDIF
+IF 戦闘中:DID
+	CALL COLUMNPRINTL, 0, "敵と遭遇した！" 
+	CALL COLUMNPRINTL, 0, "[10] 戦闘開始"
+ELSE 
+	IF ダンジョンクリア:DID
+		IF ダンジョンクリア:DID == 1
+			CALL COLUMNPRINTL, 0, @"%ダンジョン名(DID)%を制覇した！" 
+		ELSEIF ダンジョンクリア:DID == 2
+			CALL COLUMNPRINTL, 0, @"%ダンジョン名(DID)%を探索する部隊{部隊ID}は全滅した……" 
+		ELSEIF ダンジョンクリア:DID == 3
+			CALL COLUMNPRINTL, 0, @"%ダンジョン名(DID)%の探索を中断した" 
+		ENDIF
 
-	IF オールクリア
-		CALL COLUMNPRINTL, 0, "全ダンジョンの探索を終えた"
-		CALL COLUMNPRINTL, 0, "[30] 帰還する"
-	ENDIF
-ELSE
-	CALL COLUMNPRINTL, 0, @"%RETURNSPACE(進行度:DID > 1, "[10] 戻る")% %RETURNSPACE(進行度:DID < ダンジョンレベル(DID)+10, "[19] 進む")%"
-	IF 帰還確認:DID
-		CALL COLUMNPRINTL, 0, "探索は終了していません。本当に脱出しますか？"
-		CALL COLUMNPRINTL, 0, "[20] はい [21] いいえ"
+		IF オールクリア
+			CALL COLUMNPRINTL, 0, "全ダンジョンの探索を終えた"
+			CALL COLUMNPRINTL, 0, "[30] 帰還する"
+		ENDIF
 	ELSE
-		SIF 進行度:DID == 1
-			CALL COLUMNPRINTL, 0, "[20] ダンジョンから脱出する"
+		CALL COLUMNPRINTL, 0, @"%RETURNSPACE(進行度:DID > 1, "[10] 戻る")% %RETURNSPACE(進行度:DID < ダンジョンレベル(DID)+10, "[19] 進む")%"
+		IF 帰還確認:DID
+			CALL COLUMNPRINTL, 0, "探索は終了していません。本当に脱出しますか？"
+			CALL COLUMNPRINTL, 0, "[20] はい [21] いいえ"
+		ELSE
+			SIF 進行度:DID == 1
+				CALL COLUMNPRINTL, 0, "[20] ダンジョンから脱出する"
+		ENDIF
 	ENDIF
 ENDIF
-
 
 @探索画面_INPUT, DID
 #DIM DYNAMIC DID
 #DIM DYNAMIC 部隊ID
 
 部隊ID = FINDELEMENT(部隊目標, DID)
-
-DEBUGPRINTFORML {DID}
 
 IF アイテム表示中:DID
 	IF アイテム使用中:DID
@@ -119,41 +283,180 @@ ELSEIF ステータス表示中:DID >= 0
 	SELECTCASE CRESULT:1
 	ENDSELECT
 ELSE
-	SELECTCASE CRESULT:1
-		CASE 0 TO 2
-			SIF 部隊メンバー:部隊ID:(CRESULT:1)
-				CALL キャラ詳細表示, 部隊メンバー:部隊ID:(CRESULT:1)
-		CASE 3
-			アイテム表示中:DID = 1
-			CALL 部隊アイテム表示
-		CASE 10
-			IF 進行度:DID > 1
-				進行度:DID--
-				CALL エンカウント, DID
-			ENDIF
-		CASE 19
-			IF 進行度:DID < ダンジョンレベル(DID)+10
-				進行度:DID++
-				CALL エンカウント, DID
-			ENDIF
-		CASE 20
-			IF 帰還確認:DID
-				ダンジョンクリア:DID = 3
-			ELSE
-				帰還確認:DID = 1
-			ENDIF
-		CASE 21
-			帰還確認:DID = 0
-		CASE 30
-			SIF オールクリア
-				LOOP_BREAK = 1
-	ENDSELECT
+	IF 戦闘中:DID
+		戦闘中:DID = 2
+	ELSE
+		SELECTCASE CRESULT:1
+			CASE 0 TO 2
+				SIF 部隊メンバー:部隊ID:(CRESULT:1)
+					CALL キャラ詳細表示, 部隊メンバー:部隊ID:(CRESULT:1)
+			CASE 3
+				アイテム表示中:DID = 1
+				CALL 部隊アイテム表示
+			CASE 10
+				IF 進行度:DID > 1
+					進行度:DID--
+					CALL エンカウント, DID
+				ENDIF
+			CASE 19
+				IF 進行度:DID < ダンジョンレベル(DID)+10
+					進行度:DID++
+					CALL エンカウント, DID
+				ENDIF
+			CASE 20
+				IF 帰還確認:DID
+					ダンジョンクリア:DID = 3
+				ELSE
+					帰還確認:DID = 1
+				ENDIF
+			CASE 21
+				帰還確認:DID = 0
+			CASE 30
+				SIF オールクリア
+					LOOP_BREAK = 1
+		ENDSELECT
+	ENDIF
 ENDIF
 	
 @エンカウント, DID
 #DIM DYNAMIC DID
+#DIM DYNAMIC 部隊ID
+#DIM DYNAMIC LCOUNT
+
+部隊ID = FINDELEMENT(部隊目標, DID)
+
+;とりあえず雑に作っておく
+エンカウント率:DID *= 2
+
+IF RANDPER(エンカウント率:DID-部隊運勢(部隊ID))
+	;エンカウント処理
+	エンカウント率:DID = 1
+	戦闘中:DID = 1
+	;数はランダム
+	;ステータス生成は仮
+	FOR LCOUNT, 0, RAND(1, 5)
+		敵名:DID:LCOUNT = ハウンド
+		IF ダンジョンレベル(DID) <= 2
+			敵ステータス:DID:LCOUNT:レベル = RAND:ダンジョンレベル(DID)+1
+		ELSE
+			敵ステータス:DID:LCOUNT:レベル = RAND(ダンジョンレベル(DID)-2, ダンジョンレベル(DID)+1)
+		ENDIF
+		敵ステータス:DID:LCOUNT:HP = 10+(敵ステータス:DID:LCOUNT:レベル*2)
+		敵ステータス:DID:LCOUNT:筋力 = 1
+		敵ステータス:DID:LCOUNT:器用 = 1
+		敵ステータス:DID:LCOUNT:知性 = 1
+		敵ステータス:DID:LCOUNT:耐久 = 1
+		敵ステータス:DID:LCOUNT:感覚 = 1
+		敵ステータス:DID:LCOUNT:運勢 = 1
+		敵ステータス:DID:LCOUNT:TG = 0
+	NEXT
+	FOR LCOUNT, 0, 3
+		SIF !部隊メンバー:部隊ID:LCOUNT
+			CONTINUE
+		ステータス:GETCHARA(部隊メンバー:部隊ID:LCOUNT):TG = 0
+	NEXT
+ENDIF
 
 IF 進行度:DID == ダンジョンレベル(DID)+10
 	PRINTFORMW ここでボス戦
 	ダンジョンクリア:DID = 1
 ENDIF
+
+@敵数, DID
+#FUNCTION
+#DIM DYNAMIC DID
+#DIM DYNAMIC LCOUNT
+#DIM DYNAMIC 数
+
+FOR LCOUNT, 0, 5
+	SIF 敵名:DID:LCOUNT != ""
+		数++
+NEXT
+
+RETURNF 数
+
+@戦闘用部隊メンバー表示, 部隊ID
+#DIM DYNAMIC 部隊ID
+#DIM DYNAMIC LCOUNT
+#DIM DYNAMIC 対象
+#DIM DYNAMIC 行, 3
+#DIM CONST 顔グラサイズ = 6
+#DIM DYNAMIC DID
+
+DID = 部隊目標:部隊ID
+
+FOR LCOUNT, 0, 3
+	SIF !部隊メンバー:部隊ID:LCOUNT
+		CONTINUE
+	対象 = GETCHARA(部隊メンバー:部隊ID:LCOUNT)
+	CALL COLUMNCREATE, LCOUNT+1
+	IF 行動可能:DID == LCOUNT
+		CALL COLUMNBGCOLOR, LCOUNT+1, "darkblue"
+	ELSE
+		CALL COLUMNBGCOLOR, LCOUNT+1, "black"
+	ENDIF
+	CALL COLUMNRESIZE, LCOUNT+1, 2000, 顔グラサイズ*100
+	CALL COLUMNMOVE, LCOUNT+1, LCOUNT*2000, 0
+	CALL COLUMNIMG, LCOUNT+1, @"%CSTR:対象:顔グラ%", 顔グラサイズ*100, 顔グラサイズ*100
+	CALL COLUMNPRINTL, LCOUNT+1, @" [{LCOUNT}] 名前:%NAME:対象, 10, LEFT%"
+	CALL COLUMNPRINTL, LCOUNT+1, @"%"　"*顔グラサイズ% レベル:{ステータス:対象:レベル, 2, LEFT}"
+	CALL COLUMNPRINTL, LCOUNT+1, @"%"　"*顔グラサイズ% 職業:%CSTR:対象:職業, 16, LEFT%"
+	CALL COLUMNPRINT, LCOUNT+1, @"%"　"*顔グラサイズ% HP:{ステータス:対象:HP, 2}/{MAXHP(対象), 2, LEFT} ", "lime"
+	CALL COLUMNPRINT, LCOUNT+1, @"MP:{ステータス:対象:MP, 2}/{MAXMP(対象), 2, LEFT} ", "deepskyblue"
+	CALL COLUMNPRINTL, LCOUNT+1, @"VP:{ステータス:対象:VP, 2}/{MAXVP(対象), 2, LEFT} ", "yellow"
+	CALL COLUMNPRINTL, LCOUNT+1, @"%"　"*顔グラサイズ% NextTurn:{ステータス:対象:TG/100}.{ステータス:対象:TG%100}\%"
+NEXT
+FOR LCOUNT, 0, 顔グラサイズ
+	CALL COLUMNPRINTL, 0, ""
+NEXT
+
+@敵表示, DID
+#DIM DYNAMIC DID
+#DIM DYNAMIC LCOUNT
+#DIM DYNAMIC 対象
+#DIM DYNAMIC 行, 3
+#DIM CONST 顔グラサイズ = 8
+#DIM DYNAMIC 表示数
+
+FOR LCOUNT, 0, 5
+	SIF 敵名:DID:LCOUNT == ""
+		CONTINUE
+	対象 = LCOUNT
+	;部隊表示に3まで使ってるので4から始める
+	CALL COLUMNCREATE, LCOUNT+4
+	IF 行動可能:DID-10 == LCOUNT
+		CALL COLUMNBGCOLOR, LCOUNT+4, "darkblue"
+	ELSE
+		CALL COLUMNBGCOLOR, LCOUNT+4, "black"
+	ENDIF
+	;味方部隊表示が2000+2000+2000なので各敵1200は取れる
+	CALL COLUMNRESIZE, LCOUNT+4, 顔グラサイズ*100, 顔グラサイズ*100+500
+	CALL COLUMNMOVE, LCOUNT+4, 表示数*顔グラサイズ*100+(表示数*100), -700
+	CALL COLUMNIMG, LCOUNT+4, @"enemy/%敵グラ(敵名:DID:LCOUNT)%.png", 顔グラサイズ*100, 顔グラサイズ*100
+	;バグがあるので一時的にコメントアウト
+	;SIF 攻撃対象:DID-10 == LCOUNT
+	;	CALL COLUMNEFFECT, LCOUNT+4, "斬撃", 顔グラサイズ*100, 顔グラサイズ*100
+	REPEAT 顔グラサイズ
+		CALL COLUMNPRINTL, LCOUNT+4, ""
+	REND
+	SELECTCASE 行動内容:DID
+		CASE "通常攻撃"
+			IF 行動可能:DID < 10
+				CALL COLUMNPRINTL, LCOUNT+4, @"[{LCOUNT+10}] %敵名:DID:LCOUNT%"
+			ELSE
+				GOTO ELSE
+			ENDIF
+		CASEELSE
+			$ELSE
+			CALL COLUMNPRINTL, LCOUNT+4, @"%敵名:DID:LCOUNT%"
+	ENDSELECT
+
+	CALL COLUMNBAR, LCOUNT+4, 敵ステータス:DID:LCOUNT:HP, 10+(敵ステータス:DID:LCOUNT:レベル*2), 顔グラサイズ*100
+	CALL COLUMNPRINTL, LCOUNT+4, ""
+	CALL COLUMNPRINTL, LCOUNT+4, @"NextTurn:{敵ステータス:DID:LCOUNT:TG/100}.{敵ステータス:DID:LCOUNT:TG%100}\%"
+	表示数++
+NEXT
+
+FOR LCOUNT, 0, 顔グラサイズ+7
+	CALL COLUMNPRINTL, 0, ""
+NEXT

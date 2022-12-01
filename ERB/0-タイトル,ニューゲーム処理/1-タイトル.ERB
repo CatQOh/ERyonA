@@ -2,6 +2,19 @@
 
 MAX_LINE = 15
 
+CALL エフェクト生成
+
+;GCREATEFROMFILE 2, "enemy/hound.png"
+;SPRITECREATE "hound", 2
+;HTML_PRINT "<nobr><img src='hound' srcb='' width='400' height='400'><nonbutton pos='0'><img src='斬撃' srcb='' width='400' height='400'></nonbutton></nobr>"
+
+;PRINTL 
+;PRINTL 
+;PRINTL 
+
+;CALL ANIMEWAIT, 1000
+
+
 [SKIPSTART]
 DRAWLINE
 ALIGNMENT CENTER
@@ -53,6 +66,7 @@ FOR LCOUNT, 0, 10
 			CALL COLUMNPRINTL, 0, @"[{LCOUNT}] 無効なセーブデータ"
 	ENDSELECT
 NEXT
+;COLUMNLOG:0:(COLUMN:0:LINE) = "<nonbutton pos='300'><img src='NO_IMAGE' srcb='' width='200' height='200'></nonbutton>"
 
 IF INRANGE(CRESULT:1, 0, 9)
 	CALL COLUMNPRINTL, 0, @"{CRESULT:1}番には既にセーブデータが存在します。上書きしてニューゲーム開始しますか？"

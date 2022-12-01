@@ -1,1 +1,4 @@
 ﻿画像ファイルはStable Diffusionを使用して生成
+
+エフェクト素材はぴぽや(https://pipoya.net/)様が作成、配布しているものを使用
+
