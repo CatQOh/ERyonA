@@ -433,9 +433,8 @@ FOR LCOUNT, 0, 5
 	CALL COLUMNRESIZE, LCOUNT+4, 顔グラサイズ*100, 顔グラサイズ*100+500
 	CALL COLUMNMOVE, LCOUNT+4, 表示数*顔グラサイズ*100+(表示数*100), -700
 	CALL COLUMNIMG, LCOUNT+4, @"enemy/%敵グラ(敵名:DID:LCOUNT)%.png", 顔グラサイズ*100, 顔グラサイズ*100
-	;バグがあるので一時的にコメントアウト
-	;SIF 攻撃対象:DID-10 == LCOUNT
-	;	CALL COLUMNEFFECT, LCOUNT+4, "斬撃", 顔グラサイズ*100, 顔グラサイズ*100
+	SIF 攻撃対象:DID-10 == LCOUNT
+		CALL COLUMNEFFECT, LCOUNT+4, "斬撃", 顔グラサイズ*100, 顔グラサイズ*100
 	REPEAT 顔グラサイズ
 		CALL COLUMNPRINTL, LCOUNT+4, ""
 	REND

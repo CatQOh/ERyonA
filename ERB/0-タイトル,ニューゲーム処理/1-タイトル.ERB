@@ -2,18 +2,16 @@
 
 MAX_LINE = 15
 
-CALL エフェクト生成
+;CALL エフェクト生成
 
 ;GCREATEFROMFILE 2, "enemy/hound.png"
 ;SPRITECREATE "hound", 2
-;HTML_PRINT "<nobr><img src='hound' srcb='' width='400' height='400'><nonbutton pos='0'><img src='斬撃' srcb='' width='400' height='400'></nonbutton></nobr>"
+;HTML_PRINT @"<div rect='500, -500px, 500, 500px'><nobr><img src='hound' srcb='' width='400' height='400'><button value='1' pos='0'><img src='斬撃' srcb='' width='400' height='400'></button></nobr></div>"
 
 ;PRINTL 
 ;PRINTL 
 ;PRINTL 
-
 ;CALL ANIMEWAIT, 1000
-
 
 [SKIPSTART]
 DRAWLINE

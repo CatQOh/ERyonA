@@ -31,9 +31,9 @@ LOOP_BREAK = 0
 
 ARRAYCOPY "カラムメニュー", "カラム名"
 
-FOR LCOUNT, 0, 9
+FOR LCOUNT, 9, -1, -1
 	SIF カラムメニュー:LCOUNT == ""
-		SWAP カラムメニュー:LCOUNT, カラムメニュー:(LCOUNT+1)
+		ARRAYREMOVE カラムメニュー, LCOUNT, 1
 NEXT
 
 FOR LCOUNT, 0, VARSIZE("カラムメニュー")
@@ -254,6 +254,7 @@ COLUMNLOG:ARG:(COLUMN:ARG:LINE) += @"<img src='%ESCAPE(ARGS)%' srcb='' width='{A
 
 @COLUMNEFFECT, ARG, ARGS, ARG:1, ARG:2
 COLUMNLOG:ARG:(COLUMN:ARG:LINE) += @"<nonbutton pos='0'><img src='%ARGS%' srcb='' width='{ARG:1}' height='{ARG:2}'></nonbutton>"
+エフェクトあり = 1
 
 @COLUMNBAR, ARG, 数値, 最大値, 長さ
 #DIM DYNAMIC GID
@@ -333,6 +334,8 @@ CLEARLINE 1
 ;ボタンの数値が指定されたボタン番号と一致すると困るので、ボタン化されなさそうな数値に 元ネタ分かる人はすごい
 VARSET ボタン, -3189415
 
+CALL エフェクト生成
+
 HTML += "<nobr>"
 
 FOR LCOUNT, 0, 10
@@ -355,7 +358,7 @@ FOR LCOUNT, 0, 10
 	SIF COLUMN:LCOUNT:RADIUS
 		HTML += @"radius='{COLUMN:LCOUNT:RADIUS}px' "
 	
-	HTML += ">"
+	HTML += "><nobr>"
 
 	FOR LCOUNT2, 0, COLUMN:LCOUNT:9
 		SIF MAX_LINE <= LCOUNT2
@@ -401,9 +404,16 @@ FOR LCOUNT, 0, 10
 		VARSET 文字列ボタン
 	NEXT
 	COLUMN:LCOUNT:LINE = 0
-	HTML += "</div>"
+	HTML += "</nobr></div>"
 NEXT
 
 HTML += "</nobr>"
 
 HTML_PRINT HTML
+
+IF エフェクトあり
+	CALL ANIMEWAIT, 1000
+	エフェクトあり = 0
+ENDIF
+
+CALL エフェクト破棄
